@@ -50,14 +50,52 @@
 
     <div class="row g-3">
 
-        <!-- Crew Joining -->
-        <div class="col-md-4">
-            <div class="dash-card">
-                <h5><i class="fa fa-ship"></i> Crew Joining</h5>
-                <div id="dash-join"></div>
-                <button class="btn btn-sm btn-primary mt-2" onclick="showTab('crew-join')">View</button>
+       <div id="crew-join" class="tab-window" style="display:none;">
+    <h4>Crew Joining</h4>
+
+    <!-- Add Form -->
+    <div class="form-box mb-3">
+        <h6>Add Crew Joining</h6>
+        <div class="row g-2">
+
+            <div class="col-md-3">
+                <input class="form-control" id="vj-vessel" placeholder="Vessel">
             </div>
+
+            <div class="col-md-3">
+                <input class="form-control" id="vj-principal" placeholder="Principal">
+            </div>
+
+            <div class="col-md-3">
+                <input class="form-control" id="vj-port" placeholder="Port">
+            </div>
+
+            <div class="col-md-3">
+                <input class="form-control" id="vj-crew" placeholder="No. of Crew">
+            </div>
+
+            <div class="col-md-3">
+                <input class="form-control" id="vj-rank" placeholder="Rank">
+            </div>
+
+            <div class="col-md-3">
+                <input type="date" class="form-control" id="vj-date">
+            </div>
+
+            <div class="col-md-3">
+                <input class="form-control" id="vj-flight" placeholder="Flight">
+            </div>
+
+            <div class="col-md-3">
+                <button class="btn btn-success w-100" onclick="addVesselJoin()">ADD</button>
+            </div>
+
         </div>
+    </div>
+
+    <!-- Data Display -->
+    <div id="crew-join-data">Loading...</div>
+</div>
 
         <!-- Arrivals -->
         <div class="col-md-4">

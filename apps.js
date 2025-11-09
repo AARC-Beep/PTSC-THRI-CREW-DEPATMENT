@@ -35,6 +35,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
         document.getElementById('login-overlay').style.display='flex';
     }
 });
+document.querySelectorAll('.sidebar a[data-tab]').forEach(link=>{
+    link.addEventListener('click', e=>{
+        e.preventDefault();
+        const target = link.getAttribute('data-tab');
+        const role = sessionStorage.getItem('userRole');
+        // Example: only admin can delete PNI or Training
+        if((target==='training' || target==='pni-events') && role!=='admin'){
+            alert('Access denied');
+            return;
+        }
+        document.querySelectorAll('.tab-window').forEach(win=>win.style.display='none');
+        document.getElementById(target).style.display='block';
+    });
+});
 
 /* app.js for KANBUKAI Dashboard
    - Replace GAS_URL with your Apps Script Web App URL after deploying

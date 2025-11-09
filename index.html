@@ -44,11 +44,69 @@
 <!-- ===================== MAIN CONTENT ===================== -->
 <div class="main-content">
 
-    <!-- DASHBOARD -->
-    <div id="dashboard" class="tab-window">
-        <h4>Dashboard Overview</h4>
-        <div id="overview-content">Loading overview...</div>
+   <!-- ===================== DASHBOARD ===================== -->
+<div id="dashboard" class="tab-window">
+    <h4>Dashboard Overview</h4>
+
+    <div class="row g-3">
+
+        <!-- Crew Joining -->
+        <div class="col-md-4">
+            <div class="dash-card">
+                <h5><i class="fa fa-ship"></i> Crew Joining</h5>
+                <div id="dash-join"></div>
+                <button class="btn btn-sm btn-primary mt-2" onclick="showTab('crew-join')">View</button>
+            </div>
+        </div>
+
+        <!-- Arrivals -->
+        <div class="col-md-4">
+            <div class="dash-card">
+                <h5><i class="fa fa-plane-arrival"></i> Arrivals</h5>
+                <div id="dash-arrivals"></div>
+                <button class="btn btn-sm btn-primary mt-2" onclick="showTab('crew-arrivals')">View</button>
+            </div>
+        </div>
+
+        <!-- Daily Updates -->
+        <div class="col-md-4">
+            <div class="dash-card">
+                <h5><i class="fa fa-clipboard"></i> Daily Updates</h5>
+                <div id="dash-updates"></div>
+                <button class="btn btn-sm btn-primary mt-2" onclick="showTab('daily-updates')">View</button>
+            </div>
+        </div>
+
+        <!-- Memo -->
+        <div class="col-md-4">
+            <div class="dash-card">
+                <h5><i class="fa fa-sticky-note"></i> Memo</h5>
+                <div id="dash-memo"></div>
+                <button class="btn btn-sm btn-primary mt-2" onclick="showTab('memo')">View</button>
+            </div>
+        </div>
+
+        <!-- Training -->
+        <div class="col-md-4">
+            <div class="dash-card">
+                <h5><i class="fa fa-chalkboard-teacher"></i> Training</h5>
+                <div id="dash-training"></div>
+                <button class="btn btn-sm btn-primary mt-2" onclick="showTab('training')">View</button>
+            </div>
+        </div>
+
+        <!-- PNI -->
+        <div class="col-md-4">
+            <div class="dash-card">
+                <h5><i class="fa fa-calendar"></i> P&I / Events</h5>
+                <div id="dash-pni"></div>
+                <button class="btn btn-sm btn-primary mt-2" onclick="showTab('pni')">View</button>
+            </div>
+        </div>
+
     </div>
+</div>
+
 
     <!-- Crew Joining -->
     <div id="crew-join" class="tab-window" style="display:none;">

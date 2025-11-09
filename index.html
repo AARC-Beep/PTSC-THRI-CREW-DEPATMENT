@@ -1,190 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PTSC/THRI Crew Dashboard</title>
-
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-
-<!-- jsPDF & AutoTable -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-<script>
-  // make jsPDF available globally for our app.js
-  window.jsPDF = window.jspdf.jsPDF;
-</script>
-
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 
 <!-- Sidebar -->
 <div class="sidebar">
-  <h2>PTSC/THRI Crew Dept</h2>
-  <a href="#" onclick="showTab('dashboard')"><i class="fa fa-home"></i> Dashboard</a>
-  <a href="#" onclick="showTab('crew-join')"><i class="fa fa-ship"></i> Crew Joining</a>
-  <a href="#" onclick="showTab('crew-arrivals')"><i class="fa fa-plane-arrival"></i> Crew Arrivals</a>
-  <a href="#" onclick="showTab('daily-updates')"><i class="fa fa-clipboard"></i> Daily Updates</a>
-  <a href="#" onclick="showTab('memo')"><i class="fa fa-sticky-note"></i> Memo</a>
-  <a href="#" onclick="showTab('training')"><i class="fa fa-chalkboard-teacher"></i> Training</a>
-  <a href="#" onclick="showTab('pni')"><i class="fa fa-calendar"></i> P& I / Events</a>
-  <a href="#" onclick="showTab('chat')"><i class="fa fa-comments"></i> Chatboard</a>
-
-  <hr style="border-color:white;">
-
-  <a class="external-link" target="_blank" href="https://flightaware.com/">FlightAware</a>
-  <a class="external-link" target="_blank" href="https://www.msn.com/en-ph/news">MSN News PH</a>
-  <a class="external-link" target="_blank" href="https://zoom.earth/">ZOOM Earth</a>
-  <a class="external-link" target="_blank" href="https://marina.gov.ph/">MARINA</a>
-  <a class="external-link" target="_blank" href="https://dmw.gov.ph/">DMW</a>
-  <a class="external-link" target="_blank" href="https://owwa.gov.ph/">OWWA</a>
+    <h2><i class="fas fa-ship"></i> PTSC/THRI Crew Dept</h2>
+    <a href="#" data-tab="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    <a href="#" data-tab="crew-joining"><i class="fas fa-users"></i> Crew Joining</a>
+    <a href="#" data-tab="crew-arrivals"><i class="fas fa-plane-arrival"></i> Crew Arrivals</a>
+    <a href="#" data-tab="daily-updates"><i class="fas fa-file-alt"></i> Daily Updates</a>
+    <a href="#" data-tab="memo"><i class="fas fa-sticky-note"></i> Memo</a>
+    <a href="#" data-tab="training"><i class="fas fa-chalkboard-teacher"></i> Training</a>
+    <a href="#" data-tab="pni-events"><i class="fas fa-calendar-alt"></i> P & I / Events</a>
+    <a href="#" data-tab="chatboard"><i class="fas fa-comments"></i> ChatBoard</a>
+    <hr style="border-color:#004080;">
+    <a class="external-link" href="https://flightaware.com" target="_blank"><i class="fas fa-plane"></i> FlightAware</a>
+    <a class="external-link" href="https://news.google.com" target="_blank"><i class="fas fa-newspaper"></i> MSN News PH</a>
+    <a class="external-link" href="https://zoom.earth" target="_blank"><i class="fas fa-globe"></i> Zoom Earth</a>
+    <a class="external-link" href="https://marina.gov.ph" target="_blank"><i class="fas fa-anchor"></i> MARINA</a>
+    <a class="external-link" href="#" target="_blank"><i class="fas fa-building"></i> DMW</a>
+    <a class="external-link" href="#" target="_blank"><i class="fas fa-users-cog"></i> OWWA</a>
 </div>
 
-<!-- Main content -->
+<!-- Main Content -->
 <div class="main-content">
-  <!-- DASHBOARD -->
-  <div id="dashboard" class="tab-window">
-    <h4>Dashboard Overview</h4>
-    <div class="row g-3">
-      <div class="col-md-4"><div class="dash-card"><h5><i class="fa fa-ship"></i> Crew Joining</h5><div id="dash-join" class="card-body"></div><button class="btn btn-sm btn-primary mt-2" onclick="showTab('crew-join')">View</button></div></div>
-      <div class="col-md-4"><div class="dash-card"><h5><i class="fa fa-plane-arrival"></i> Arrivals</h5><div id="dash-arrivals" class="card-body"></div><button class="btn btn-sm btn-primary mt-2" onclick="showTab('crew-arrivals')">View</button></div></div>
-      <div class="col-md-4"><div class="dash-card"><h5><i class="fa fa-clipboard"></i> Daily Updates</h5><div id="dash-updates" class="card-body"></div><button class="btn btn-sm btn-primary mt-2" onclick="showTab('daily-updates')">View</button></div></div>
-      <div class="col-md-4"><div class="dash-card"><h5><i class="fa fa-sticky-note"></i> Memo</h5><div id="dash-memo" class="card-body"></div><button class="btn btn-sm btn-primary mt-2" onclick="showTab('memo')">View</button></div></div>
-      <div class="col-md-4"><div class="dash-card"><h5><i class="fa fa-chalkboard-teacher"></i> Training</h5><div id="dash-training" class="card-body"></div><button class="btn btn-sm btn-primary mt-2" onclick="showTab('training')">View</button></div></div>
-      <div class="col-md-4"><div class="dash-card"><h5><i class="fa fa-calendar"></i> P&I / Events</h5><div id="dash-pni" class="card-body"></div><button class="btn btn-sm btn-primary mt-2" onclick="showTab('pni')">View</button></div></div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="tab-window">
+        <h4>Dashboard Quick View</h4>
+        <div class="row" id="dashboard-cards">
+            <div class="col-md-4">
+                <div class="dash-card">
+                    <h5>Vessels Today</h5>
+                    <div class="card-body" id="dash-join"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dash-card">
+                    <h5>Arrivals</h5>
+                    <div class="card-body" id="dash-arrivals"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dash-card">
+                    <h5>Pending Memos</h5>
+                    <div class="card-body" id="dash-memo"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dash-card">
+                    <h5>Training</h5>
+                    <div class="card-body" id="dash-training"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dash-card">
+                    <h5>P & I / Events</h5>
+                    <div class="card-body" id="dash-pni"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dash-card">
+                    <h5>Users Online</h5>
+                    <div class="card-body" id="dash-users"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <hr>
-    <div class="d-flex gap-2 align-items-center">
-      <label class="mb-0">Monthly Report</label>
-      <select id="mf-month" class="form-select form-select-sm" style="width:auto;">
-        <option value="">Month</option>
-        <option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option>
-        <option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option>
-        <option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option>
-      </select>
-      <input id="mf-year" class="form-control form-control-sm" placeholder="Year (e.g. 2025)" style="width:120px;">
-      <button class="btn btn-sm btn-outline-primary" onclick="generateMonthlyPDF()">Generate PDF</button>
-    </div>
-  </div>
-
-  <!-- CREW JOIN -->
-  <div id="crew-join" class="tab-window" style="display:none;">
-    <h4>Crew Joining</h4>
-
-    <div class="form-box mb-3">
-      <h6>Add Crew Joining</h6>
-      <div class="row g-2">
-        <div class="col-md-3"><input class="form-control" id="vj-vessel" placeholder="Vessel"></div>
-        <div class="col-md-3"><input class="form-control" id="vj-principal" placeholder="Principal"></div>
-        <div class="col-md-3"><input class="form-control" id="vj-port" placeholder="Port"></div>
-        <div class="col-md-3"><input class="form-control" id="vj-crew" placeholder="No. of Crew"></div>
-        <div class="col-md-3"><input class="form-control" id="vj-rank" placeholder="Rank"></div>
-        <div class="col-md-3"><input type="date" class="form-control" id="vj-date"></div>
-        <div class="col-md-3"><input class="form-control" id="vj-flight" placeholder="Flight"></div>
-        <div class="col-md-3"><button class="btn btn-success w-100" onclick="addVesselJoin()">ADD</button></div>
-      </div>
+    <!-- Crew Joining -->
+    <div id="crew-joining" class="tab-window" style="display:none;">
+        <h4>Crew Joining</h4>
+        <div class="form-box">
+            <form id="form-crew-joining">
+                <!-- Form inputs dynamically populated by JS -->
+            </form>
+        </div>
+        <div class="table-responsive" id="crew-join-data"></div>
     </div>
 
-    <div id="crew-join-data">Loading...</div>
-  </div>
-
-  <!-- ARRIVALS -->
-  <div id="crew-arrivals" class="tab-window" style="display:none;">
-    <h4>Crew Arrivals</h4>
-    <div class="form-box mb-3">
-      <h6>Add Arrival</h6>
-      <div class="row g-2">
-        <div class="col-md-3"><input class="form-control" id="av-vessel" placeholder="Vessel"></div>
-        <div class="col-md-3"><input class="form-control" id="av-principal" placeholder="Principal"></div>
-        <div class="col-md-3"><input class="form-control" id="av-port" placeholder="Port"></div>
-        <div class="col-md-3"><input class="form-control" id="av-crew" placeholder="No. of Crew"></div>
-        <div class="col-md-3"><input class="form-control" id="av-rank" placeholder="Rank"></div>
-        <div class="col-md-3"><input type="date" class="form-control" id="av-date"></div>
-        <div class="col-md-3"><input class="form-control" id="av-flight" placeholder="Flight"></div>
-        <div class="col-md-3"><button class="btn btn-success w-100" onclick="addArrivals()">ADD</button></div>
-      </div>
+    <!-- Crew Arrivals -->
+    <div id="crew-arrivals" class="tab-window" style="display:none;">
+        <h4>Crew Arrivals</h4>
+        <div class="form-box">
+            <form id="form-crew-arrivals"></form>
+        </div>
+        <div class="table-responsive" id="crew-arrivals-data"></div>
     </div>
-    <div id="crew-arrivals-data">Loading...</div>
-  </div>
 
-  <!-- DAILY UPDATES -->
-  <div id="daily-updates" class="tab-window" style="display:none;">
-    <h4>Daily Updates</h4>
-    <div class="form-box mb-3">
-      <h6>Add Update</h6>
-      <div class="row g-2">
-        <div class="col-md-4"><input class="form-control" id="up-title" placeholder="Title"></div>
-        <div class="col-md-5"><input class="form-control" id="up-details" placeholder="Details"></div>
-        <div class="col-md-2"><input type="date" class="form-control" id="up-date"></div>
-        <div class="col-md-1"><button class="btn btn-success w-100" onclick="addUpdate()">ADD</button></div>
-      </div>
+    <!-- Daily Updates -->
+    <div id="daily-updates" class="tab-window" style="display:none;">
+        <h4>Daily Updates</h4>
+        <div class="form-box">
+            <form id="form-daily-updates"></form>
+        </div>
+        <div class="table-responsive" id="daily-updates-data"></div>
     </div>
-    <div id="daily-updates-data">Loading...</div>
-  </div>
 
-  <!-- MEMO -->
-  <div id="memo" class="tab-window" style="display:none;">
-    <h4>Memo</h4>
-    <div class="form-box mb-3">
-      <h6>Add Memo</h6>
-      <div class="row g-2">
-        <div class="col-md-4"><input class="form-control" id="memo-title" placeholder="Title"></div>
-        <div class="col-md-6"><input class="form-control" id="memo-details" placeholder="Details"></div>
-        <div class="col-md-2"><input type="date" class="form-control" id="memo-date"></div>
-        <div class="col-md-12 mt-2"><button class="btn btn-success" onclick="addMemo()">ADD</button></div>
-      </div>
+    <!-- Memo -->
+    <div id="memo" class="tab-window" style="display:none;">
+        <h4>Memo</h4>
+        <div class="form-box">
+            <form id="form-memo"></form>
+        </div>
+        <div class="table-responsive" id="memo-data"></div>
     </div>
-    <div id="memo-data">Loading...</div>
-  </div>
 
-  <!-- TRAINING -->
-  <div id="training" class="tab-window" style="display:none;">
-    <h4>Training</h4>
-    <div class="form-box mb-3">
-      <h6>Add Training</h6>
-      <div class="row g-2">
-        <div class="col-md-4"><input class="form-control" id="tr-subject" placeholder="Subject"></div>
-        <div class="col-md-6"><input class="form-control" id="tr-details" placeholder="Details"></div>
-        <div class="col-md-2"><button class="btn btn-success w-100" onclick="addTraining()">ADD</button></div>
-      </div>
+    <!-- Training -->
+    <div id="training" class="tab-window" style="display:none;">
+        <h4>Training</h4>
+        <div class="form-box">
+            <form id="form-training"></form>
+        </div>
+        <div class="table-responsive" id="training-data"></div>
     </div>
-    <div id="training-data">Loading...</div>
-  </div>
 
-  <!-- PNI -->
-  <div id="pni" class="tab-window" style="display:none;">
-    <h4>P& I / Events</h4>
-    <div class="form-box mb-3">
-      <h6>Add P&I / Event</h6>
-      <div class="row g-2">
-        <div class="col-md-4"><input class="form-control" id="pn-subject" placeholder="Subject"></div>
-        <div class="col-md-6"><input class="form-control" id="pn-details" placeholder="Details"></div>
-        <div class="col-md-2"><button class="btn btn-success w-100" onclick="addPni()">ADD</button></div>
-      </div>
+    <!-- P & I / Events -->
+    <div id="pni-events" class="tab-window" style="display:none;">
+        <h4>P & I / Events</h4>
+        <div class="form-box">
+            <form id="form-pni-events"></form>
+        </div>
+        <div class="table-responsive" id="pni-data"></div>
     </div>
-    <div id="pni-data">Loading...</div>
-  </div>
 
-  <!-- CHAT -->
-  <div id="chat" class="tab-window" style="display:none;">
-    <h4>Chatboard</h4>
-    <div id="chatboard">Loading chat...</div>
-    <input id="chat-input" class="form-control mt-2" placeholder="Type a message...">
-    <button class="btn btn-primary mt-2" onclick="sendMessage()">Send</button>
-  </div>
+    <!-- Chatboard -->
+    <div id="chatboard" class="tab-window" style="display:none;">
+        <h4>ChatBoard</h4>
+        <div id="chatboard"></div>
+        <div class="form-box">
+            <form id="form-chatboard">
+                <input type="text" id="chat-name" placeholder="Your Name" class="form-control mb-1" required>
+                <input type="text" id="chat-message" placeholder="Message" class="form-control mb-1" required>
+                <button type="submit" class="btn btn-primary btn-sm">Send</button>
+            </form>
+        </div>
+    </div>
 
 </div>
 
-<!-- Sticky note -->
+<!-- Sticky Note -->
 <div id="sticky-note">
-  <h6>My Note</h6>
-  <textarea id="sticky-text"></textarea>
+    <textarea id="sticky-text" placeholder="Your private notes here..."></textarea>
 </div>
 
-<!-- App JS -->
-<script src="js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="app.js"></script>
+<script>
+    // Sidebar tab switching
+    document.querySelectorAll('.sidebar a[data-tab]').forEach(link=>{
+        link.addEventListener('click', e=>{
+            e.preventDefault();
+            const target = link.getAttribute('data-tab');
+            document.querySelectorAll('.tab-window').forEach(win=>win.style.display='none');
+            document.getElementById(target).style.display='block';
+        });
+    });
+</script>
 </body>
 </html>

@@ -141,3 +141,22 @@ body {
         right: 5%;
     }
 }
+/* Dashboard card style */
+.dash-card {
+    background: white;
+    border: 2px solid #bcd9ff;
+    border-radius: 10px;
+    padding: 15px;
+    height: 230px;
+    overflow: hidden;
+}
+
+.dash-card h5 {
+    color: navy;
+    font-weight: bold;
+}
+
+.dash-card div {
+    max-height: 120px;
+    overflow-y: auto;
+}

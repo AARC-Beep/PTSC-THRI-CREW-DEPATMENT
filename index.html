@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTSC/THRI Crew Dashboard</title>
+<!-- Bootstrap CSS for layout -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Font Awesome for icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+    }
+    /* Sidebar styling */
+    .sidebar {
+        height: 100vh;
+        width: 250px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: navy;
+        color: yellow;
+        padding-top: 20px;
+        overflow-y: auto;
+    }
+    .sidebar h2 {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 1.3rem;
+        color: yellow;
+    }
+    .sidebar a {
+        display: block;
+        color: yellow;
+        padding: 12px 20px;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+    .sidebar a:hover {
+        background-color: #001f4d;
+        color: #fff;
+    }
+    .sidebar .external-link {
+        color: #ffd700;
+    }
+    /* Main content styling */
+    .main-content {
+        margin-left: 250px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        min-height: 100vh;
+    }
+    .tab-window {
+        background-color: white;
+        border: 1px solid #cce0ff;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .tab-window h4 {
+        margin-bottom: 15px;
+        color: navy;
+    }
+    /* Chatboard styling */
+    #chatboard {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #cce0ff;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    #chatboard .message {
+        margin-bottom: 8px;
+    }
+    /* Sticky note styling */
+    #sticky-note {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 250px;
+        height: 200px;
+        background: #fffacd;
+        border: 1px solid #f0e68c;
+        padding: 10px;
+        overflow-y: auto;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>PTSC/THRI Crew Dept</h2>
+    <a href="#" onclick="showTab('dashboard')"><i class="fa fa-home"></i> Dashboard</a>
+    <a href="#" onclick="showTab('crew-join')"><i class="fa fa-ship"></i> Crew Joining</a>
+    <a href="#" onclick="showTab('crew-arrivals')"><i class="fa fa-plane-arrival"></i> Crew Arrivals</a>
+    <a href="#" onclick="showTab('daily-updates')"><i class="fa fa-clipboard"></i> Daily Updates</a>
+    <a href="#" onclick="showTab('memo')"><i class="fa fa-sticky-note"></i> Memo</a>
+    <a href="#" onclick="showTab('training')"><i class="fa fa-chalkboard-teacher"></i> Training</a>
+    <a href="#" onclick="showTab('pni')"><i class="fa fa-calendar"></i> P& I / Events</a>
+    <a href="#" onclick="showTab('chat')"><i class="fa fa-comments"></i> Chatboard</a>
+    <!-- External Links -->
+    <hr style="border-color: #fff;">
+    <a href="https://www.flightaware.com/" target="_blank" class="external-link">FlightAware</a>
+    <a href="https://www.msn.com/en-ph/news" target="_blank" class="external-link">MSN News PH</a>
+    <a href="https://zoom.earth/" target="_blank" class="external-link">ZOOM Earth</a>
+    <a href="https://marina.gov.ph/" target="_blank" class="external-link">MARINA</a>
+    <a href="#" target="_blank" class="external-link">DMW</a>
+    <a href="#" target="_blank" class="external-link">OWWA</a>
+</div>
+
+<div class="main-content">
+    <!-- Dashboard Tab -->
+    <div id="dashboard" class="tab-window">
+        <h4>Dashboard Overview</h4>
+        <div id="overview-content">
+            <!-- Quick overview content from Google Sheets (top 5 entries per tab) -->
+            <p>Loading overview...</p>
+        </div>
+    </div>
+
+    <!-- Crew Joining -->
+    <div id="crew-join" class="tab-window" style="display:none;">
+        <h4>Crew Joining</h4>
+        <div id="crew-join-data">Loading...</div>
+    </div>
+
+    <!-- Crew Arrivals -->
+    <div id="crew-arrivals" class="tab-window" style="display:none;">
+        <h4>Crew Arrivals</h4>
+        <div id="crew-arrivals-data">Loading...</div>
+    </div>
+
+    <!-- Daily Updates -->
+    <div id="daily-updates" class="tab-window" style="display:none;">
+        <h4>Daily Updates</h4>
+        <div id="daily-updates-data">Loading...</div>
+    </div>
+
+    <!-- Memo -->
+    <div id="memo" class="tab-window" style="display:none;">
+        <h4>Memo</h4>
+        <div id="memo-data">Loading...</div>
+    </div>
+
+    <!-- Training -->
+    <div id="training" class="tab-window" style="display:none;">
+        <h4>Training</h4>
+        <div id="training-data">Loading...</div>
+    </div>
+
+    <!-- P& I / Events -->
+    <div id="pni" class="tab-window" style="display:none;">
+        <h4>P& I / Events</h4>
+        <div id="pni-data">Loading...</div>
+    </div>
+
+    <!-- Chatboard -->
+    <div id="chat" class="tab-window" style="display:none;">
+        <h4>Chatboard</h4>
+        <div id="chatboard">Loading chat...</div>
+        <input type="text" id="chat-input" placeholder="Type a message" class="form-control mt-2">
+        <button class="btn btn-primary mt-2" onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<!-- Sticky Note -->
+<div id="sticky-note">
+    <h6>My Note</h6>
+    <textarea id="sticky-text" style="width:100%; height:150px;"></textarea>
+</div>
+
+<script>
+    // Tab switching
+    function showTab(tabId) {
+        const tabs = ['dashboard','crew-join','crew-arrivals','daily-updates','memo','training','pni','chat'];
+        tabs.forEach(id => {
+            document.getElementById(id).style.display = (id === tabId) ? 'block' : 'none';
+        });
+    }
+
+    // Sticky Note saving locally
+    const stickyText = document.getElementById('sticky-text');
+    stickyText.value = localStorage.getItem('stickyNote') || '';
+    stickyText.addEventListener('input', () => {
+        localStorage.setItem('stickyNote', stickyText.value);
+    });
+
+    // Chatboard (placeholder, needs Google Apps Script backend)
+    function sendMessage() {
+        const input = document.getElementById('chat-input');
+        if(input.value.trim() === '') return;
+        const chat = document.getElementById('chatboard');
+        const now = new Date().toLocaleString();
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message';
+        messageDiv.textContent = `[${now}] You: ${input.value}`;
+        chat.appendChild(messageDiv);
+        input.value = '';
+        chat.scrollTop = chat.scrollHeight;
+        // TODO: send message to Google Sheets Chatboard via Apps Script
+    }
+
+    // Example: fetch data from Google Sheets via Apps Script (needs GAS URL)
+    /*
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyHJOMWdg01HTWdV1DoMajJV4oFja2YirfG1K56hnkQskFB9YSzfMGvahax8q0BIf9b/exec';
+    function fetchData(tabName, containerId) {
+        fetch(`${GAS_URL}?sheet=${tabName}`)
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = JSON.stringify(data.slice(0,5), null, 2);
+            });
+    }
+    fetchData('Vessel_Join', 'crew-join-data');
+    fetchData('Arrivals', 'crew-arrivals-data');
+    fetchData('Updates', 'daily-updates-data');
+    fetchData('Memo', 'memo-data');
+    fetchData('Training', 'training-data');
+    fetchData('Pni', 'pni-data');
+    fetchData('Chatboard', 'chatboard');
+    */
+
+<script src="js/app.js"></script>
+
+</body>
+</html>

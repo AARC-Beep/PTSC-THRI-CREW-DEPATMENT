@@ -1,3 +1,41 @@
+// ---------- Login ----------
+async function loginUser(){
+    const username = qs('login-username').value.trim();
+    const password = qs('login-password').value.trim();
+    const errDiv = qs('login-error');
+    errDiv.innerText = '';
+    if(!username || !password){ errDiv.innerText = 'Enter username and password'; return; }
+
+    try{
+        const users = await apiFetch(new URLSearchParams({sheet:'Users', action:'get'}));
+        const match = users.find(u=> u.Username===username && u.Password===password);
+        if(match){
+            // store role in sessionStorage
+            sessionStorage.setItem('loggedInUser', username);
+            sessionStorage.setItem('userRole', match.Role || '');
+            document.getElementById('login-overlay').style.display='none';
+            showTab('dashboard');
+            loadAllData();
+            loadDashboard();
+        } else {
+            errDiv.innerText = 'Invalid username or password';
+        }
+    }catch(err){
+        errDiv.innerText = 'Login failed: '+err.message;
+    }
+}
+
+// check login on page load
+document.addEventListener('DOMContentLoaded', ()=>{
+    const user = sessionStorage.getItem('loggedInUser');
+    if(user){
+        document.getElementById('login-overlay').style.display='none';
+        showTab('dashboard');
+    } else {
+        document.getElementById('login-overlay').style.display='flex';
+    }
+});
+
 /* app.js for KANBUKAI Dashboard
    - Replace GAS_URL with your Apps Script Web App URL after deploying
 */

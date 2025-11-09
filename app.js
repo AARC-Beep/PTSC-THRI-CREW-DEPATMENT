@@ -27,28 +27,46 @@ async function apiFetch(params){
     return j.data;
 }
 
-// ---------- LOGIN ----------
+// ---------- Login ----------
 async function loginUser(){
     const username = qs('login-username').value.trim();
     const password = qs('login-password').value.trim();
     const errDiv = qs('login-error');
-    errDiv.innerText='';
-    if(!username||!password){ errDiv.innerText='Enter username and password'; return; }
+    errDiv.innerText = '';
+    if(!username || !password){ errDiv.innerText = 'Enter username and password'; return; }
 
     try{
         const users = await apiFetch(new URLSearchParams({sheet:'Users', action:'get'}));
-        const match = users.find(u=> u.Username===username && u.Password===password);
+        // Normalize username and trim spaces
+        const match = users.find(u => 
+            String(u.Username).trim().toLowerCase() === username.toLowerCase() &&
+            String(u.Password).trim() === password
+        );
         if(match){
             sessionStorage.setItem('loggedInUser', username);
-            sessionStorage.setItem('userRole', match.Role||'');
-            qs('login-overlay').style.display='none';
+            sessionStorage.setItem('userRole', match.Role || '');
+            document.getElementById('login-overlay').style.display='none';
             showTab('dashboard');
             loadAllData();
             loadDashboard();
-            stickyInit();
-        } else errDiv.innerText='Invalid username or password';
-    }catch(err){ errDiv.innerText='Login failed: '+err.message; }
+        } else {
+            errDiv.innerText = 'Invalid username or password';
+        }
+    }catch(err){
+        errDiv.innerText = 'Login failed: '+err.message;
+    }
 }
+
+// check login on page load
+document.addEventListener('DOMContentLoaded', ()=>{
+    const user = sessionStorage.getItem('loggedInUser');
+    if(user){
+        document.getElementById('login-overlay').style.display='none';
+        showTab('dashboard');
+    } else {
+        document.getElementById('login-overlay').style.display='flex';
+    }
+});
 
 // ---------- SHOW TAB ----------
 function showTab(tabId){

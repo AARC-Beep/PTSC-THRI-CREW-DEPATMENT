@@ -65,7 +65,7 @@
     <button class="btn btn-primary mb-3" onclick="toggleForm('join')">Add New</button>
     <div id="join-form" class="form-box" style="display:none;"></div>
     <div id="crew-join-data" class="mt-3"></div>
-    <button class="btn btn-secondary mt-2" onclick="generateMonthlyPDF()">Generate Monthly PDF</button>
+    <button class="btn btn-secondary mt-2" onclick="generateMonthlyPDF('Vessel_Join')">Generate Monthly PDF</button>
   </div>
 
   <!-- CREW ARRIVALS -->
@@ -74,7 +74,7 @@
     <button class="btn btn-primary mb-3" onclick="toggleForm('arrivals')">Add New</button>
     <div id="arrival-form" class="form-box" style="display:none;"></div>
     <div id="crew-arrivals-data" class="mt-3"></div>
-    <button class="btn btn-secondary mt-2" onclick="generateMonthlyPDF()">Generate Monthly PDF</button>
+    <button class="btn btn-secondary mt-2" onclick="generateMonthlyPDF('Arrivals')">Generate Monthly PDF</button>
   </div>
 
   <!-- DAILY UPDATES -->
@@ -86,7 +86,7 @@
   </div>
 
   <!-- MEMO -->
-  <div id="memo" class="tab-window">
+ <div id="memo" class="tab-window">
     <h3>Memo</h3>
     <button class="btn btn-primary mb-3" onclick="toggleForm('memo')">Add New</button>
     <div id="memo-form" class="form-box" style="display:none;"></div>
@@ -94,7 +94,7 @@
   </div>
 
   <!-- TRAINING -->
-   <div id="training" class="tab-window">
+  <div id="training" class="tab-window">
     <h3>Training</h3>
     <button class="btn btn-primary mb-3" onclick="toggleForm('training')">Add New</button>
     <div id="training-form" class="form-box" style="display:none;"></div>
@@ -118,7 +118,7 @@
   </div>
 
   <!-- HELP / USER MANUAL -->
-  <div id="help" class="tab-window" style="display:none;">
+  <div id="help" class="tab-window">
     <h3>Help / User Manual</h3>
     <p>This dashboard allows PTSC/THRI crew management. Use the sidebar to navigate:</p>
     <ul>

@@ -1,4 +1,9 @@
-/* ---------------------- BASE ---------------------- */
+/* ---------------------- BOX SIZING ---------------------- */
+* {
+    box-sizing: border-box;
+}
+
+/* ---------------------- BODY ---------------------- */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -16,7 +21,6 @@ body {
     color: yellow;
     padding-top: 20px;
     overflow-y: auto;
-    box-sizing: border-box;
     z-index: 1000;
 }
 
@@ -48,11 +52,11 @@ body {
 
 /* ---------------------- MAIN CONTENT ---------------------- */
 .main {
-    margin-left: 240px; /* match sidebar width */
+    margin-left: 240px; /* same as sidebar width */
     padding: 20px;
-    box-sizing: border-box;
-    overflow-x: hidden;
     min-height: 100vh;
+    overflow-x: hidden;
+    width: calc(100% - 240px); /* prevent horizontal overflow */
 }
 
 /* ---------------------- DASHBOARD CARDS ---------------------- */
@@ -67,9 +71,9 @@ body {
     border: 2px solid #bcd9ff;
     border-radius: 10px;
     padding: 15px;
-    flex: 0 0 32%; /* 3 cards per row */
+    flex: 0 0 32%;
     max-width: 32%;
-    box-sizing: border-box;
+    word-wrap: break-word; /* prevent long content from overflowing */
 }
 
 .dash-card h5 {
@@ -83,24 +87,22 @@ body {
     overflow-y: auto;
 }
 
-/* ---------------------- TAB WINDOW ---------------------- */
-.tab-window {
-    background-color: white;
-    border: 1px solid #cce0ff;
-    border-radius: 5px;
-    padding: 15px;
-    margin-bottom: 20px;
+/* ---------------------- TABLES ---------------------- */
+table {
+    width: 100%;
+    table-layout: fixed; /* prevent table overflow */
+    word-wrap: break-word;
 }
 
-/* ---------------------- TABLES ---------------------- */
 .table-responsive {
     max-height: 400px;
-    overflow: auto;
+    overflow-x: auto; /* horizontal scroll if needed */
+    overflow-y: auto;
     border: 1px solid #e9f2ff;
     border-radius: 6px;
 }
 
-/* ---------------------- MODAL ---------------------- */
+/* ---------------------- MODALS ---------------------- */
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -112,6 +114,7 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 2000;
+    overflow-y: auto; /* scroll if modal content too tall */
 }
 
 .modal-box {
@@ -121,6 +124,8 @@ body {
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 /* ---------------------- RESPONSIVE ---------------------- */
@@ -130,12 +135,13 @@ body {
 
 @media (max-width: 768px) {
     .sidebar { width: 200px; }
-    .main { margin-left: 200px; }
+    .main { margin-left: 200px; width: calc(100% - 200px); }
     .dash-card { flex: 0 0 48%; max-width: 48%; }
 }
 
 @media (max-width: 600px) {
     .sidebar { position: relative; width: 100%; height: auto; }
-    .main { margin-left: 0; }
+    .main { margin-left: 0; width: 100%; }
     .dash-card { flex: 0 0 100%; max-width: 100%; }
 }
+

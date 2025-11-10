@@ -20,7 +20,7 @@
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-  <h5 class="text-center mb-4">PTSC/THRI Crew Dept.</h5>
+  <h5 class="text-center mb-4">PTSC/THRI Crew Dept</h5>
 
   <a href="#" data-tab="dashboard">Dashboard</a>
   <a href="#" data-tab="crew-join">Crew Joining</a>
@@ -30,7 +30,6 @@
   <a href="#" data-tab="training">Training</a>
   <a href="#" data-tab="pni">P&I / Events</a>
   <a href="#" data-tab="chat">Chatboard</a>
-  <a href="#" onclick="generateSheetPDF('Vessel_Join')">Monthly PDF</a>
   <a href="#" data-tab="help">Help / User Manual</a>
 
   <hr style="border-color:#003366;">
@@ -44,147 +43,152 @@
 </div>
 
 <!-- MAIN CONTENT -->
-<div class="main">
+<div class="main-content">
 
-  <!-- DASHBOARD -->
-  <div id="dashboard" class="tab-window">
-    <h3>Dashboard Overview</h3>
-    <div class="row">
-      <div class="col-md-4"><div class="card dash-card"><h5>Crew Joining</h5><div id="dash-join"></div></div></div>
-      <div class="col-md-4"><div class="card dash-card"><h5>Crew Arrivals</h5><div id="dash-arrivals"></div></div></div>
-      <div class="col-md-4"><div class="card dash-card"><h5>Daily Updates</h5><div id="dash-updates"></div></div></div>
-      <div class="col-md-4"><div class="card dash-card"><h5>Memo</h5><div id="dash-memo"></div></div></div>
-      <div class="col-md-4"><div class="card dash-card"><h5>Training</h5><div id="dash-training"></div></div></div>
-      <div class="col-md-4"><div class="card dash-card"><h5>P&I Events</h5><div id="dash-pni"></div></div></div>
+<!-- DASHBOARD -->
+<div id="dashboard" class="tab-window">
+  <h3>Dashboard Overview</h3>
+  <div class="row">
+    <div class="col-md-4"><div class="card dash-card"><h5>Crew Joining</h5><div id="dash-join"></div></div></div>
+    <div class="col-md-4"><div class="card dash-card"><h5>Crew Arrivals</h5><div id="dash-arrivals"></div></div></div>
+    <div class="col-md-4"><div class="card dash-card"><h5>Daily Updates</h5><div id="dash-updates"></div></div></div>
+    <div class="col-md-4"><div class="card dash-card"><h5>Memo</h5><div id="dash-memo"></div></div></div>
+    <div class="col-md-4"><div class="card dash-card"><h5>Training</h5><div id="dash-training"></div></div></div>
+    <div class="col-md-4"><div class="card dash-card"><h5>P&I Events</h5><div id="dash-pni"></div></div></div>
+  </div>
+
+  <button class="btn btn-warning mt-3" onclick="generateMonthlyPDF()">Generate Monthly PDF (Joining + Arrivals)</button>
+</div>
+
+<!-- CREW JOINING -->
+<div id="crew-join" class="tab-window" style="display:none;">
+  <h3>Crew Joining</h3>
+  <button class="btn btn-primary mb-3" onclick="toggleForm('join-form')">Add New</button>
+
+  <div id="join-form" class="form-box" style="display:none;">
+    <div class="row g-2">
+      <div class="col-md-4"><input id="vj-vessel" class="form-control" placeholder="Vessel"></div>
+      <div class="col-md-4"><input id="vj-principal" class="form-control" placeholder="Principal"></div>
+      <div class="col-md-4"><input id="vj-port" class="form-control" placeholder="Port"></div>
+      <div class="col-md-4"><input id="vj-crew" class="form-control" placeholder="No. of Crew"></div>
+      <div class="col-md-4"><input id="vj-rank" class="form-control" placeholder="Rank"></div>
+      <div class="col-md-4"><input id="vj-date" type="date" class="form-control"></div>
+      <div class="col-md-4"><input id="vj-flight" class="form-control" placeholder="Flight"></div>
     </div>
+    <button class="btn btn-success mt-2" onclick="addVesselJoin()">Save</button>
+    <button class="btn btn-secondary mt-2" onclick="toggleForm('join-form')">Cancel</button>
   </div>
 
-  <!-- CREW JOINING -->
-  <div id="crew-join" class="tab-window" style="display:none;">
-    <h3>Crew Joining</h3>
-    <button class="btn btn-primary mb-3" onclick="document.getElementById('join-form').style.display='block'">Add New</button>
-    <div id="join-form" class="form-box" style="display:none;">
-      <div class="row g-2">
-        <div class="col-md-4"><input id="vj-vessel" class="form-control" placeholder="Vessel"></div>
-        <div class="col-md-4"><input id="vj-principal" class="form-control" placeholder="Principal"></div>
-        <div class="col-md-4"><input id="vj-port" class="form-control" placeholder="Port"></div>
-        <div class="col-md-4"><input id="vj-crew" class="form-control" placeholder="No. of Crew"></div>
-        <div class="col-md-4"><input id="vj-rank" class="form-control" placeholder="Rank"></div>
-        <div class="col-md-4"><input id="vj-date" type="date" class="form-control"></div>
-        <div class="col-md-4"><input id="vj-flight" class="form-control" placeholder="Flight"></div>
-      </div>
-      <button class="btn btn-success mt-2" onclick="addRowGeneric('Vessel_Join',{Vessel:'vj-vessel',Principal:'vj-principal',Port:'vj-port','No. of Crew':'vj-crew',Rank:'vj-rank',Date:'vj-date',Flight:'vj-flight'})">Save</button>
-      <button class="btn btn-secondary mt-2" onclick="document.getElementById('join-form').style.display='none'">Cancel</button>
+  <div id="crew-join-data" class="mt-3"></div>
+</div>
+
+<!-- CREW ARRIVALS -->
+<div id="crew-arrivals" class="tab-window" style="display:none;">
+  <h3>Crew Arrivals</h3>
+  <button class="btn btn-primary mb-3" onclick="toggleForm('arrival-form')">Add New</button>
+
+  <div id="arrival-form" class="form-box" style="display:none;">
+    <div class="row g-2">
+      <div class="col-md-4"><input id="av-vessel" class="form-control" placeholder="Vessel"></div>
+      <div class="col-md-4"><input id="av-principal" class="form-control" placeholder="Principal"></div>
+      <div class="col-md-4"><input id="av-port" class="form-control" placeholder="Port"></div>
+      <div class="col-md-4"><input id="av-crew" class="form-control" placeholder="No. of Crew"></div>
+      <div class="col-md-4"><input id="av-rank" class="form-control" placeholder="Rank"></div>
+      <div class="col-md-4"><input id="av-date" type="date" class="form-control"></div>
+      <div class="col-md-4"><input id="av-flight" class="form-control" placeholder="Flight"></div>
     </div>
-    <div id="crew-join-data" class="mt-3"></div>
+    <button class="btn btn-success mt-2" onclick="addArrivals()">Save</button>
+    <button class="btn btn-secondary mt-2" onclick="toggleForm('arrival-form')">Cancel</button>
   </div>
 
-  <!-- CREW ARRIVALS -->
-  <div id="crew-arrivals" class="tab-window" style="display:none;">
-    <h3>Crew Arrivals</h3>
-    <button class="btn btn-primary mb-3" onclick="document.getElementById('arrival-form').style.display='block'">Add New</button>
-    <div id="arrival-form" class="form-box" style="display:none;">
-      <div class="row g-2">
-        <div class="col-md-4"><input id="av-vessel" class="form-control" placeholder="Vessel"></div>
-        <div class="col-md-4"><input id="av-principal" class="form-control" placeholder="Principal"></div>
-        <div class="col-md-4"><input id="av-port" class="form-control" placeholder="Port"></div>
-        <div class="col-md-4"><input id="av-crew" class="form-control" placeholder="No. of Crew"></div>
-        <div class="col-md-4"><input id="av-rank" class="form-control" placeholder="Rank"></div>
-        <div class="col-md-4"><input id="av-date" type="date" class="form-control"></div>
-        <div class="col-md-4"><input id="av-flight" class="form-control" placeholder="Flight"></div>
-      </div>
-      <button class="btn btn-success mt-2" onclick="addRowGeneric('Arrivals',{Vessel:'av-vessel',Principal:'av-principal',Port:'av-port','No. of Crew':'av-crew',Rank:'av-rank',Date:'av-date',Flight:'av-flight'})">Save</button>
-      <button class="btn btn-secondary mt-2" onclick="document.getElementById('arrival-form').style.display='none'">Cancel</button>
-    </div>
-    <div id="crew-arrivals-data" class="mt-3"></div>
+  <div id="crew-arrivals-data" class="mt-3"></div>
+</div>
+
+<!-- DAILY UPDATES -->
+<div id="daily-updates" class="tab-window" style="display:none;">
+  <h3>Daily Updates</h3>
+  <button class="btn btn-primary mb-3" onclick="toggleForm('update-form')">Add New</button>
+  <div id="update-form" class="form-box" style="display:none;">
+    <input id="up-title" class="form-control mb-2" placeholder="Title">
+    <textarea id="up-details" class="form-control mb-2" placeholder="Details"></textarea>
+    <input id="up-date" type="date" class="form-control mb-2">
+    <button class="btn btn-success" onclick="addUpdate()">Save</button>
+    <button class="btn btn-secondary" onclick="toggleForm('update-form')">Cancel</button>
   </div>
+  <div id="daily-updates-data" class="mt-3"></div>
+</div>
 
-  <!-- DAILY UPDATES -->
-  <div id="daily-updates" class="tab-window" style="display:none;">
-    <h3>Daily Updates</h3>
-    <button class="btn btn-primary mb-3" onclick="document.getElementById('update-form').style.display='block'">Add New</button>
-    <div id="update-form" class="form-box" style="display:none;">
-      <input id="up-title" class="form-control mb-2" placeholder="Title">
-      <textarea id="up-details" class="form-control mb-2" placeholder="Details"></textarea>
-      <input id="up-date" type="date" class="form-control mb-2">
-      <button class="btn btn-success" onclick="addRowGeneric('Updates',{Title:'up-title',Details:'up-details',Date:'up-date'})">Save</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('update-form').style.display='none'">Cancel</button>
-    </div>
-    <div id="daily-updates-data" class="mt-3"></div>
+<!-- MEMO -->
+<div id="memo" class="tab-window" style="display:none;">
+  <h3>Memo</h3>
+  <button class="btn btn-primary mb-3" onclick="toggleForm('memo-form')">Add New</button>
+  <div id="memo-form" class="form-box" style="display:none;">
+    <input id="memo-title" class="form-control mb-2" placeholder="Title">
+    <textarea id="memo-details" class="form-control mb-2" placeholder="Details"></textarea>
+    <input id="memo-date" type="date" class="form-control mb-2">
+    <button class="btn btn-success" onclick="addMemo()">Save</button>
+    <button class="btn btn-secondary" onclick="toggleForm('memo-form')">Cancel</button>
   </div>
+  <div id="memo-data" class="mt-3"></div>
+</div>
 
-  <!-- MEMO -->
-  <div id="memo" class="tab-window" style="display:none;">
-    <h3>Memo</h3>
-    <button class="btn btn-primary mb-3" onclick="document.getElementById('memo-form').style.display='block'">Add New</button>
-    <div id="memo-form" class="form-box" style="display:none;">
-      <input id="memo-title" class="form-control mb-2" placeholder="Title">
-      <textarea id="memo-details" class="form-control mb-2" placeholder="Details"></textarea>
-      <input id="memo-date" type="date" class="form-control mb-2">
-      <button class="btn btn-success" onclick="addRowGeneric('Memo',{Title:'memo-title',Details:'memo-details',Date:'memo-date'})">Save</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('memo-form').style.display='none'">Cancel</button>
-    </div>
-    <div id="memo-data" class="mt-3"></div>
+<!-- TRAINING -->
+<div id="training" class="tab-window" style="display:none;">
+  <h3>Training</h3>
+  <button class="btn btn-primary mb-3" onclick="toggleForm('training-form')">Add New</button>
+  <div id="training-form" class="form-box" style="display:none;">
+    <input id="tr-subject" class="form-control mb-2" placeholder="Subject">
+    <textarea id="tr-details" class="form-control mb-2" placeholder="Details"></textarea>
+    <button class="btn btn-success" onclick="addTraining()">Save</button>
+    <button class="btn btn-secondary" onclick="toggleForm('training-form')">Cancel</button>
   </div>
+  <div id="training-data" class="mt-3"></div>
+</div>
 
-  <!-- TRAINING -->
-  <div id="training" class="tab-window" style="display:none;">
-    <h3>Training</h3>
-    <button class="btn btn-primary mb-3" onclick="document.getElementById('training-form').style.display='block'">Add New</button>
-    <div id="training-form" class="form-box" style="display:none;">
-      <input id="tr-subject" class="form-control mb-2" placeholder="Subject">
-      <textarea id="tr-details" class="form-control mb-2" placeholder="Details"></textarea>
-      <button class="btn btn-success" onclick="addRowGeneric('Training',{Subject:'tr-subject',Details:'tr-details'})">Save</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('training-form').style.display='none'">Cancel</button>
-    </div>
-    <div id="training-data" class="mt-3"></div>
+<!-- PNI / EVENTS -->
+<div id="pni" class="tab-window" style="display:none;">
+  <h3>P&I / Events</h3>
+  <button class="btn btn-primary mb-3" onclick="toggleForm('pni-form')">Add New</button>
+  <div id="pni-form" class="form-box" style="display:none;">
+    <input id="pn-subject" class="form-control mb-2" placeholder="Subject">
+    <textarea id="pn-details" class="form-control mb-2" placeholder="Details"></textarea>
+    <button class="btn btn-success" onclick="addPni()">Save</button>
+    <button class="btn btn-secondary" onclick="toggleForm('pni-form')">Cancel</button>
   </div>
+  <div id="pni-data" class="mt-3"></div>
+</div>
 
-  <!-- PNI / EVENTS -->
-  <div id="pni" class="tab-window" style="display:none;">
-    <h3>P&I / Events</h3>
-    <button class="btn btn-primary mb-3" onclick="document.getElementById('pni-form').style.display='block'">Add New</button>
-    <div id="pni-form" class="form-box" style="display:none;">
-      <input id="pn-subject" class="form-control mb-2" placeholder="Subject">
-      <textarea id="pn-details" class="form-control mb-2" placeholder="Details"></textarea>
-      <button class="btn btn-success" onclick="addRowGeneric('Pni',{Subject:'pn-subject',Details:'pn-details'})">Save</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('pni-form').style.display='none'">Cancel</button>
-    </div>
-    <div id="pni-data" class="mt-3"></div>
+<!-- CHATBOARD -->
+<div id="chat" class="tab-window" style="display:none;">
+  <h3>Chatboard</h3>
+  <div id="chatboard" class="mb-2" style="border:1px solid #ccc;height:300px;overflow-y:auto;padding:10px;"></div>
+  <div class="d-flex gap-2">
+    <input id="chat-input" class="form-control" placeholder="Type message...">
+    <button class="btn btn-primary" onclick="sendMessage()">Send</button>
   </div>
+</div>
 
-  <!-- CHATBOARD -->
-  <div id="chat" class="tab-window" style="display:none;">
-    <h3>Chatboard</h3>
-    <div id="chatboard" class="mb-2" style="border:1px solid #ccc;height:300px;overflow-y:auto;padding:10px;"></div>
-    <div class="d-flex gap-2">
-      <input id="chat-input" class="form-control" placeholder="Type message...">
-      <button class="btn btn-primary" onclick="sendMessage()">Send</button>
-    </div>
-  </div>
+<!-- HELP / USER MANUAL -->
+<div id="help" class="tab-window" style="display:none;">
+  <h3>User Manual / Help</h3>
+  <p>Welcome to the PTSC/THRI Crew Dashboard. Use the sidebar to navigate:</p>
+  <ul>
+    <li><b>Dashboard:</b> Overview of Crew Joining, Arrivals, Updates, Memo, Training, P&I.</li>
+    <li><b>Crew Joining / Arrivals:</b> Add, Edit, Delete crew data. Deleted items go to Archive.</li>
+    <li><b>Daily Updates / Memo / Training / P&I:</b> Add notes, events, training logs.</li>
+    <li><b>Chatboard:</b> Communicate with team members in real-time.</li>
+    <li><b>Sticky Note:</b> Your personal notes (private).</li>
+    <li><b>PDF:</b> Generate item PDFs and monthly reports for joining/arrival including archived items.</li>
+  </ul>
+</div>
 
-  <!-- STICKY NOTE -->
-  <h5 class="mt-4">Sticky Note (Private)</h5>
-  <textarea id="sticky-text" style="width:100%;height:100px;"></textarea>
-
-  <!-- HELP / USER MANUAL -->
-  <div id="help" class="tab-window" style="display:none;">
-    <h3>Help / User Manual</h3>
-    <p>Welcome to PTSC/THRI Crew Dashboard.</p>
-    <ul>
-      <li>Use the sidebar to navigate between modules.</li>
-      <li>Add/Edit/Delete records in each module using the buttons.</li>
-      <li>Generate PDFs for items or full monthly reports.</li>
-      <li>Sticky notes are private and saved locally in your browser.</li>
-      <li>Chatboard allows communication between logged-in users.</li>
-    </ul>
-  </div>
-
-</div><!-- END MAIN -->
+<!-- STICKY NOTE -->
+<h5 class="mt-4">Sticky Note (Private)</h5>
+<textarea id="sticky-text"></textarea>
 
 <!-- LOGIN OVERLAY -->
-<div id="login-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;justify-content:center;align-items:center;z-index:9999;">
-  <div style="background:white;padding:30px;border-radius:8px;width:300px;text-align:center;">
+<div id="login-overlay" class="login-overlay">
+  <div class="login-box">
     <h4>PTSC/THRI Login</h4>
     <input type="text" id="login-username" class="form-control mb-2" placeholder="Username">
     <input type="password" id="login-password" class="form-control mb-2" placeholder="Password">

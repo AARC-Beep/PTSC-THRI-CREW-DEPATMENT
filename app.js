@@ -106,7 +106,7 @@ async function loadDashboard(){
                 const d = document.createElement("div");
                 d.className = "card-body";
                 const title = r.Vessel || r.Title || r.Subject || "";
-                d.innerHTML = `<small>${shortDate(r.Timestamp)} • ${escapeHtml(title)}</small>`;
+                d.innerHTML = `<small>${shortDate(r.Timestamp)} • <b>${escapeHtml(title)}</b></small>`;
                 box.appendChild(d);
             });
         }catch(err){

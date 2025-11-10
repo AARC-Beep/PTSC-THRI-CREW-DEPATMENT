@@ -5,7 +5,7 @@
 ============================================================ */
 
 // ✅ Replace with your own Apps Script web app URL
-const GAS_URL = "https://script.google.com/macros/s/YOUR_APP_SCRIPT_ID/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyHJOMWdg01HTWdV1DoMajJV4oFja2YirfG1K56hnkQskFB9YSzfMGvahax8q0BIf9b/exec";
 
 // ----------------------- UTILITY --------------------------
 function qs(id){ return document.getElementById(id); }

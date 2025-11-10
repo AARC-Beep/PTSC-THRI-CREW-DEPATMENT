@@ -1,7 +1,12 @@
-/* ---------------- Sidebar & Main Fix ---------------- */
+/* ========================================================
+   PTSC/THRI Crew Dashboard - Full CSS
+========================================================= */
+
+/* ---------------- Body & Layout ---------------- */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
+    background-color: #f5faff;
 }
 
 /* Sidebar */
@@ -14,95 +19,162 @@ body {
     background-color: navy;
     color: yellow;
     padding-top: 20px;
-    z-index: 1000; /* make sure it's above main content */
+    overflow-y: auto;
+    z-index: 1000;
 }
 
-/* Main Content */
+.sidebar h5 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+.sidebar a {
+    display: block;
+    color: yellow;
+    padding: 12px 20px;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    background-color: #001f4d;
+    color: white;
+}
+
+.sidebar .external-link {
+    color: #ffd700;
+}
+
+/* Main content */
 .main {
-    margin-left: 250px; /* push content to the right of sidebar */
+    margin-left: 250px;
     padding: 20px;
     min-height: 100vh;
-    background-color: #f5faff;
 }
 
-/* Responsive fix for smaller screens */
-@media (max-width: 768px) {
+/* ---------------- Tabs & Cards ---------------- */
+.tab-window {
+    background-color: white;
+    border: 1px solid #cce0ff;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.tab-window h3 {
+    margin-bottom: 15px;
+    color: navy;
+}
+
+/* Dashboard Cards */
+.dash-card {
+    background: white;
+    border: 2px solid #bcd9ff;
+    border-radius: 10px;
+    padding: 15px;
+    height: 230px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-card h5 {
+    color: navy;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.dash-card .card-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* ---------------- Tables ---------------- */
+.table-responsive {
+    max-height: 400px;
+    overflow: auto;
+    border: 1px solid #e9f2ff;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+table.table-sm {
+    font-size: 0.875rem;
+}
+
+/* ---------------- Forms ---------------- */
+.form-box {
+    background: #fbfcff;
+    border: 1px solid #e6f0ff;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+/* ---------------- Chatboard ---------------- */
+#chatboard {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #cce0ff;
+    background: #ffffff;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+#chatboard .message {
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+
+/* ---------------- Sticky Note ---------------- */
+#sticky-text {
+    width: 100%;
+    height: 80px;
+    padding: 5px;
+    border: 1px solid #dcdcdc;
+    border-radius: 4px;
+    resize: none;
+}
+
+/* ---------------- Modal ---------------- */
+.modal-backdrop {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal-box {
+    background: white;
+    width: 90%;
+    max-width: 700px;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+/* ---------------- Buttons inside cards ---------------- */
+.dash-card button {
+    align-self: flex-end;
+}
+
+/* ---------------- Responsive ---------------- */
+@media only screen and (max-width: 768px) {
     .sidebar { width: 200px; }
     .main { margin-left: 200px; }
 }
 
-@media (max-width: 600px) {
+@media only screen and (max-width: 600px) {
     .sidebar { position: relative; width: 100%; height: auto; }
     .main { margin-left: 0; }
 }
-
-/* ---------- base from previous style.css ---------- */
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
-}
-
-/* Sidebar */
-.sidebar {
-    height: 100vh;
-    width: 250px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    background-color: navy;
-    color: yellow;
-    padding-top: 20px;
-    overflow-y: auto;
-}
-.sidebar h2 { text-align:center; margin-bottom:30px; font-size:1.3rem; color:yellow; font-weight:bold;}
-.sidebar a { display:block; color:yellow; padding:12px 20px; text-decoration:none; font-size:.95rem; transition:.3s;}
-.sidebar a:hover { background-color:#001f4d; color:white;}
-.sidebar .external-link{ color:#ffd700;}
-
-/* Main Content */
-.main-content { margin-left:250px; padding:20px; min-height:100vh; }
-
-/* Tab windows */
-.tab-window { background-color:white; border:1px solid #cce0ff; border-radius:5px; padding:15px; margin-bottom:20px; }
-.tab-window h4 { margin-bottom:15px; color:navy; }
-
-/* Dashboard cards */
-.dash-card { background:white; border:2px solid #bcd9ff; border-radius:10px; padding:15px; height:230px; overflow:hidden; display:flex; flex-direction:column; }
-.dash-card h5 { color:navy; font-weight:bold; margin-bottom:8px; }
-.dash-card .card-body { flex:1; overflow-y:auto; }
-
-/* Table */
-.table-responsive { max-height:400px; overflow:auto; border:1px solid #e9f2ff; padding:8px; border-radius:6px; }
-
-/* Form box */
-.form-box { background:#fbfcff; border:1px solid #e6f0ff; padding:10px; border-radius:6px; margin-bottom:10px; }
-
-/* Chatboard */
-#chatboard { max-height:300px; overflow-y:auto; border:1px solid #cce0ff; background:#ffffff; padding:10px; margin-bottom:10px; }
-#chatboard .message { border-bottom:1px solid #e0e0e0; padding-bottom:5px; margin-bottom:5px; }
-
-/* Sticky note */
-#sticky-note { position:fixed; bottom:20px; right:20px; width:250px; height:200px; background:#fffacd; border:1px solid #f0e68c; padding:10px; overflow-y:auto; border-radius:5px; }
-#sticky-note textarea { width:100%; height:150px; border:none; background:transparent; resize:none; }
-
-/* Edit modal (simple) */
-.modal-backdrop { position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:9999; }
-.modal-box { background:white; width:90%; max-width:700px; border-radius:8px; padding:16px; box-shadow:0 6px 20px rgba(0,0,0,0.2); }
-
-/* Buttons inside card */
-.dash-card button{ align-self:flex-end; }
-
-/* Responsive */
-@media only screen and (max-width:768px) {
-    .sidebar{ width:200px; } .main-content{ margin-left:200px; }
-}
-@media only screen and (max-width:600px) {
-    .sidebar{ position:relative; width:100%; height:auto; } .main-content{ margin-left:0; }
-    #sticky-note{ width:90%; right:5%; }
-}
-
-/* Print header styles for PDF html (if using html->canvas) */
-.print-header { display:flex; gap:12px; align-items:center; margin-bottom:10px; }
-.print-header .logo { width:72px; height:72px; background:#e9f3ff; display:flex; align-items:center; justify-content:center; border-radius:6px; font-weight:bold; color:navy; }
-.print-header .meta { font-size:12px; }

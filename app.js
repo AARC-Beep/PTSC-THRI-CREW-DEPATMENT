@@ -130,8 +130,9 @@ async function loadAllData(){
         ["Timestamp","Subject","Details","Date","UID"]);
     await loadTable("Pni","pni-data",
         ["Timestamp","Subject","Details","Date","UID"]);
-    await loadChat();
-}
+    await loadChat("Chatboard","chatboard-data",
+         ["Timestamp","Name","Message","Date","UID"]);             
+  }
 
 async function loadTable(sheet, containerId, columns){
     const div = qs(containerId);

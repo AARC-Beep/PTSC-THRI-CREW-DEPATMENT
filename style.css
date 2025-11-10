@@ -1,149 +1,173 @@
-/* ============================================================
-   PTSC / KANBUKAI Dashboard - Full CSS
-============================================================ */
+/* ======================================================
+   PTSC / KANBUKAI Dashboard CSS
+====================================================== */
 
-/* Base */
+/* ---------------- SIDEBAR ---------------- */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
 }
 
-/* Sidebar */
 .sidebar {
-    height: 100vh;
-    width: 250px;
     position: fixed;
-    top: 0;
     left: 0;
-    background-color: navy;
-    color: yellow;
-    padding-top: 20px;
+    top: 0;
+    width: 220px;
+    height: 100%;
+    background-color: #003366;
+    color: #fff;
+    padding: 20px 10px;
+    box-sizing: border-box;
     overflow-y: auto;
-    z-index: 10;
+    z-index: 1000;
 }
 
-.sidebar h2, .sidebar h5 { 
-    text-align: center;
-    margin-bottom: 20px; 
-    font-size: 1.2rem; 
-    color: yellow; 
-    font-weight: bold;
+.sidebar h5 {
+    color: #fff;
 }
 
 .sidebar a {
-    display: block; 
-    color: yellow; 
-    padding: 12px 20px; 
-    text-decoration: none; 
-    font-size: 0.95rem; 
-    transition: 0.3s;
+    display: block;
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 10px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    font-size: 14px;
 }
-.sidebar a:hover { background-color: #001f4d; color: white; }
-.sidebar .external-link { color: #ffd700; }
 
-/* Main Content */
+.sidebar a:hover {
+    background-color: #0055aa;
+}
+
+/* ---------------- MAIN CONTENT ---------------- */
 .main {
-    margin-left: 250px;
+    margin-left: 240px;
     padding: 20px;
     min-height: 100vh;
-    box-sizing: border-box;
-    background-color: #f8f9fa;
+    background-color: #f4f4f4;
 }
 
-/* Tab Windows */
+/* ---------------- TABS ---------------- */
 .tab-window {
-    background-color: white;
-    border: 1px solid #cce0ff;
-    border-radius: 5px;
+    display: none;
+}
+
+.tab-window.active {
+    display: block;
+}
+
+/* ---------------- DASHBOARD CARDS ---------------- */
+.dash-card {
+    background-color: #fff;
+    border-radius: 8px;
     padding: 15px;
     margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
-.tab-window h3 { margin-bottom: 15px; color: navy; }
 
-/* Dashboard cards */
-.dash-card {
-    background: white;
-    border: 2px solid #bcd9ff;
-    border-radius: 10px;
-    padding: 15px;
-    height: 230px;
-    display: flex;
-    flex-direction: column;
-}
-.dash-card h5 { color: navy; font-weight: bold; margin-bottom: 8px; }
-.dash-card .card-body { flex: 1; overflow-y: auto; }
-
-/* Tables */
-.table-responsive { max-height: 400px; overflow: auto; border: 1px solid #e9f2ff; padding: 8px; border-radius: 6px; }
-table.table { width: 100%; border-collapse: collapse; }
-table.table th, table.table td { padding: 6px 8px; border: 1px solid #dee2e6; font-size: 0.9rem; }
-
-/* Form Box */
-.form-box { background: #fbfcff; border: 1px solid #e6f0ff; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
-
-/* Chatboard */
-#chatboard {
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid #cce0ff;
-    background: #ffffff;
-    padding: 10px;
+.dash-card h5 {
     margin-bottom: 10px;
 }
-#chatboard .message { border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; margin-bottom: 5px; }
 
-/* Sticky Note */
-#sticky-note-section {
-    margin-top: 20px;
-    background: #fffacd;
-    border: 1px solid #f0e68c;
+/* ---------------- TABLES ---------------- */
+.table {
+    width: 100%;
+    background-color: #fff;
+}
+
+.table th, .table td {
+    padding: 8px;
+    text-align: left;
+    font-size: 13px;
+}
+
+.table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* ---------------- FORMS ---------------- */
+.form-box {
+    background-color: #fff;
     padding: 15px;
     border-radius: 6px;
-    max-width: 600px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
 }
-#sticky-note-section textarea {
+
+/* ---------------- CHAT ---------------- */
+#chatboard {
+    background-color: #fff;
+    border-radius: 6px;
+}
+
+/* ---------------- STICKY NOTE ---------------- */
+#sticky-text {
     width: 100%;
-    border: 1px solid #e0d68c;
-    border-radius: 4px;
-    background: #fffbe0;
-    resize: vertical;
-    padding: 8px;
-    font-size: 0.95rem;
     min-height: 120px;
-}
-#sticky-note-section button {
-    display: block;
-    margin-top: 10px;
-}
-
-/* Edit modal */
-.modal-backdrop { 
-    position: fixed; 
-    left: 0; top: 0; 
-    width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.4); 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    z-index: 9999; 
-}
-.modal-box { 
-    background: white; 
-    width: 90%; 
-    max-width: 700px; 
-    border-radius: 8px; 
-    padding: 16px; 
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2); 
+    padding: 10px;
+    border-radius: 6px;
+    resize: vertical;
+    border: 1px solid #ccc;
+    font-size: 14px;
 }
 
-/* Responsive */
-@media only screen and (max-width: 768px) {
-    .sidebar { width: 200px; } 
-    .main { margin-left: 200px; }
+/* ---------------- MODAL ---------------- */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
 }
-@media only screen and (max-width: 600px) {
-    .sidebar { position: relative; width: 100%; height: auto; } 
-    .main { margin-left: 0; }
-    #sticky-note-section { max-width: 100%; }
+
+.modal-box {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+}
+
+/* ---------------- LOGIN OVERLAY ---------------- */
+#login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+/* ---------------- RESPONSIVE ---------------- */
+@media(max-width: 992px){
+    .sidebar {
+        width: 180px;
+        padding: 15px 8px;
+    }
+    .main {
+        margin-left: 200px;
+        padding: 15px;
+    }
+}
+
+@media(max-width: 768px){
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+    .main {
+        margin-left: 0;
+        padding: 15px;
+    }
 }

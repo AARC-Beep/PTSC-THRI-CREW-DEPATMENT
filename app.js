@@ -127,9 +127,9 @@ async function loadAllData(){
     await loadTable("Memo","memo-data",
         ["Timestamp","Title","Details","Date","UID"]);
     await loadTable("Training","training-data",
-        ["Timestamp","Subject","Details","UID"]);
+        ["Timestamp","Subject","Details","Date","UID"]);
     await loadTable("Pni","pni-data",
-        ["Timestamp","Subject","Details","UID"]);
+        ["Timestamp","Subject","Details","Date","UID"]);
     await loadChat();
 }
 

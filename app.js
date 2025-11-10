@@ -37,7 +37,11 @@ async function loginUser(){
 
   try{
     const users = await apiFetch(new URLSearchParams({sheet:"Users",action:"get"}));
-    const match = users.find(x=>x.Username.trim().toLowerCase()===u.toLowerCase() && x.Password.trim()===p);
+    const match = users.find(x =>
+    String(x.Username || "").trim().toLowerCase() === u.toLowerCase() &&
+    String(x.Password || "").trim() === p
+);
+
     if(!match){ err.innerText="Invalid username or password"; return; }
 
     sessionStorage.setItem("loggedInUser",match.Username);

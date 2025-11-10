@@ -145,19 +145,37 @@ async function loadTable(sheet, containerId, columns){
         table.innerHTML = `<thead><tr>${columns.map(c=>`<th>${c}</th>`).join("")}<th>Actions</th></tr></thead>`;
         const tbody = document.createElement("tbody");
 
-        data.slice().reverse().forEach(row=>{
-            const tr = document.createElement("tr");
-            columns.forEach(col=>{
-                tr.innerHTML += `<td>${escapeHtml(String(row[col]||""))}</td>`;
-            });
-            const uid = row.UID || "";
-            tr.innerHTML += `<td>
-                <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${sheet}','${uid}')">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteRowConfirm('${sheet}','${uid}')">Delete</button>
-                <button class="btn btn-sm btn-outline-secondary" onclick="generateItemPDF('${sheet}','${uid}')">PDF</button>
-            </td>`;
-            tbody.appendChild(tr);
-        });
+        data.slice().reverse().forEach(row => {
+    const tr = document.createElement("tr");
+
+    columns.forEach(col => {
+        let val = row[col] || "";
+
+        // Make bold for specific fields
+        if(
+            (sheet === "Vessel_Join" && col === "Vessel") ||
+            (sheet === "Arrivals" && col === "Vessel") ||
+            (sheet === "Updates" && col === "Title") ||
+            (sheet === "Memo" && col === "Title") ||
+            (sheet === "Training" && col === "Subject") ||
+            (sheet === "Pni" && col === "Subject")
+        ){
+            val = `<b>${escapeHtml(String(val))}</b>`;
+        } else {
+            val = escapeHtml(String(val));
+        }
+
+        tr.innerHTML += `<td>${val}</td>`;
+    });
+
+    tr.innerHTML += `<td>
+        <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${sheet}','${row.UID}')">Edit</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteRowConfirm('${sheet}','${row.UID}')">Delete</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="generateItemPDF('${sheet}','${row.UID}')">PDF</button>
+    </td>`;
+
+    tbody.appendChild(tr);
+});
 
         table.appendChild(tbody);
         div.innerHTML = "";

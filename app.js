@@ -94,6 +94,7 @@ async function loadDashboard(){
         "Training":"dash-training",
         "Pni":"dash-pni"
     };
+
     for(const sheet in map){
         const box = qs(map[sheet]);
         if(!box) continue;
@@ -102,19 +103,27 @@ async function loadDashboard(){
             const data = await apiFetch(new URLSearchParams({sheet, action:"get"}));
             const rows = data.slice(-5).reverse();
             box.innerHTML = "";
+
             rows.forEach(r=>{
                 const d = document.createElement("div");
                 d.className = "card-body";
-                const title = r.Vessel || r.Title || r.Subject || "";
-                d.innerHTML = `<small>${shortDate(r.Timestamp)} • ${escapeHtml(title)}</small>`;
+
+                let title = "";
+                if(sheet==="Vessel_Join" || sheet==="Arrivals") title = `<b>${escapeHtml(r.Vessel || "")}</b>`;
+                else if(sheet==="Updates" || sheet==="Memo") title = `<b>${escapeHtml(r.Title || "")}</b>`;
+                else if(sheet==="Training" || sheet==="Pni") title = `<b>${escapeHtml(r.Subject || "")}</b>`;
+
+                d.innerHTML = `<small>${shortDate(r.Timestamp)} • ${title}</small>`;
                 box.appendChild(d);
             });
+
         }catch(err){
             box.innerHTML = "Error";
             console.error("loadDashboard", err);
         }
     }
 }
+
 
 /* ---------------- TABLES ---------------- */
 async function loadAllData(){

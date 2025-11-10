@@ -586,4 +586,9 @@ async function addRowData(sheet, fieldsObj){
 }
 
 /* ----------------- Help link handler ----------------- */
-document.querySelector(".s
+const helpLink = document.querySelector('.sidebar a[data-tab="help"]');
+if(helpLink){
+    helpLink.addEventListener("click", () => {
+        showTab("help");
+    });
+}

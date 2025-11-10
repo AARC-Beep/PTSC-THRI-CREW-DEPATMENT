@@ -1,3 +1,41 @@
+/* ---------------- Sidebar & Main Fix ---------------- */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background-color: navy;
+    color: yellow;
+    padding-top: 20px;
+    z-index: 1000; /* make sure it's above main content */
+}
+
+/* Main Content */
+.main {
+    margin-left: 250px; /* push content to the right of sidebar */
+    padding: 20px;
+    min-height: 100vh;
+    background-color: #f5faff;
+}
+
+/* Responsive fix for smaller screens */
+@media (max-width: 768px) {
+    .sidebar { width: 200px; }
+    .main { margin-left: 200px; }
+}
+
+@media (max-width: 600px) {
+    .sidebar { position: relative; width: 100%; height: auto; }
+    .main { margin-left: 0; }
+}
+
 /* ---------- base from previous style.css ---------- */
 body {
     margin: 0;

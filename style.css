@@ -1,21 +1,17 @@
-/* ========================================================
-   PTSC/THRI Crew Dashboard - Full CSS
-========================================================= */
-
-/* ---------------- Body & Layout ---------------- */
+/* ---------- Base ---------- */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #f5faff;
+    background-color: #f8f9fa;
 }
 
-/* Sidebar */
+/* ---------- Sidebar ---------- */
 .sidebar {
+    height: 100vh;
     width: 250px;
     position: fixed;
     top: 0;
     left: 0;
-    bottom: 0;
     background-color: navy;
     color: yellow;
     padding-top: 20px;
@@ -23,10 +19,11 @@ body {
     z-index: 1000;
 }
 
-.sidebar h5 {
+.sidebar h2, .sidebar h5 {
     text-align: center;
     margin-bottom: 30px;
-    font-size: 1.3rem;
+    font-size: 1.2rem;
+    color: yellow;
     font-weight: bold;
 }
 
@@ -35,8 +32,8 @@ body {
     color: yellow;
     padding: 12px 20px;
     text-decoration: none;
-    font-size: 0.95rem;
-    transition: 0.3s;
+    font-size: .95rem;
+    transition: .3s;
 }
 
 .sidebar a:hover {
@@ -48,14 +45,15 @@ body {
     color: #ffd700;
 }
 
-/* Main content */
+/* ---------- Main Content ---------- */
 .main {
     margin-left: 250px;
     padding: 20px;
     min-height: 100vh;
+    background-color: #f8f9fa;
 }
 
-/* ---------------- Tabs & Cards ---------------- */
+/* ---------- Tab Windows ---------- */
 .tab-window {
     background-color: white;
     border: 1px solid #cce0ff;
@@ -69,7 +67,7 @@ body {
     color: navy;
 }
 
-/* Dashboard Cards */
+/* ---------- Dashboard Cards ---------- */
 .dash-card {
     background: white;
     border: 2px solid #bcd9ff;
@@ -92,7 +90,7 @@ body {
     overflow-y: auto;
 }
 
-/* ---------------- Tables ---------------- */
+/* ---------- Tables ---------- */
 .table-responsive {
     max-height: 400px;
     overflow: auto;
@@ -101,11 +99,7 @@ body {
     border-radius: 6px;
 }
 
-table.table-sm {
-    font-size: 0.875rem;
-}
-
-/* ---------------- Forms ---------------- */
+/* ---------- Form Box ---------- */
 .form-box {
     background: #fbfcff;
     border: 1px solid #e6f0ff;
@@ -114,7 +108,7 @@ table.table-sm {
     margin-bottom: 10px;
 }
 
-/* ---------------- Chatboard ---------------- */
+/* ---------- Chatboard ---------- */
 #chatboard {
     max-height: 300px;
     overflow-y: auto;
@@ -130,17 +124,30 @@ table.table-sm {
     margin-bottom: 5px;
 }
 
-/* ---------------- Sticky Note ---------------- */
-#sticky-text {
+/* ---------- Sticky Note ---------- */
+#sticky-note {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 250px;
+    height: 200px;
+    background: #fffacd;
+    border: 1px solid #f0e68c;
+    padding: 10px;
+    overflow-y: auto;
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+#sticky-note textarea {
     width: 100%;
-    height: 80px;
-    padding: 5px;
-    border: 1px solid #dcdcdc;
-    border-radius: 4px;
+    height: 150px;
+    border: none;
+    background: transparent;
     resize: none;
 }
 
-/* ---------------- Modal ---------------- */
+/* ---------- Edit Modal ---------- */
 .modal-backdrop {
     position: fixed;
     left: 0;
@@ -163,18 +170,54 @@ table.table-sm {
     box-shadow: 0 6px 20px rgba(0,0,0,0.2);
 }
 
-/* ---------------- Buttons inside cards ---------------- */
+/* ---------- Buttons Inside Cards ---------- */
 .dash-card button {
     align-self: flex-end;
 }
 
-/* ---------------- Responsive ---------------- */
-@media only screen and (max-width: 768px) {
+/* ---------- Responsive ---------- */
+@media only screen and (max-width:768px) {
     .sidebar { width: 200px; }
     .main { margin-left: 200px; }
 }
 
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width:600px) {
     .sidebar { position: relative; width: 100%; height: auto; }
     .main { margin-left: 0; }
+    #sticky-note { width: 90%; right: 5%; }
+}
+
+/* ---------- Print Header for PDF ---------- */
+.print-header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.print-header .logo {
+    width: 72px;
+    height: 72px;
+    background: #e9f3ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-weight: bold;
+    color: navy;
+}
+
+.print-header .meta {
+    font-size: 12px;
+}
+
+/* ---------- Help / User Manual Sidebar Link ---------- */
+.sidebar a.help-link {
+    color: #ffeb3b;
+    font-weight: bold;
+}
+
+.sidebar a.help-link:hover {
+    color: white;
+    background-color: #004080;
 }

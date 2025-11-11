@@ -97,17 +97,27 @@
   <div id="training" class="tab-window">
     <h3>Training</h3>
     <button class="btn btn-primary mb-3" onclick="toggleForm('training')">Add New</button>
-    <div id="training-form" class="form-box" style="display:none;"></div>
-    <div id="training-data" class="mt-3"></div>
-  </div>
+    <div id="training-form" class="form-box" style="display:none;">
+    <input id="tr-subject" class="form-control mb-2" placeholder="Subject">
+    <textarea id="tr-details" class="form-control mb-2" placeholder="Details"></textarea>
+    <input id="tr-date" type="date" class="form-control mb-2">
+    <button class="btn btn-success" onclick="addTraining()">Save</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('training-form').style.display='none'">Cancel</button>
+</div>
+
 
   <!-- PNI -->
   <div id="pni" class="tab-window">
     <h3>P&I / Events</h3>
     <button class="btn btn-primary mb-3" onclick="toggleForm('pni')">Add New</button>
-    <div id="pni-form" class="form-box" style="display:none;"></div>
-    <div id="pni-data" class="mt-3"></div>
-  </div>
+    <div id="training-form" class="form-box" style="display:none;">
+    <input id="tr-subject" class="form-control mb-2" placeholder="Subject">
+    <textarea id="tr-details" class="form-control mb-2" placeholder="Details"></textarea>
+    <input id="tr-date" type="date" class="form-control mb-2">
+    <button class="btn btn-success" onclick="addTraining()">Save</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('training-form').style.display='none'">Cancel</button>
+</div>
+>
 
   <!-- CHATBOARD -->
   <div id="chat" class="tab-window">

@@ -12,6 +12,7 @@ function qs(id){ return document.getElementById(id); }
 
 async function apiFetch(params){
     const url = `${GAS_URL}?${params.toString()}`;
+    console.log("DEBUG → apiFetch URL:", url);  // Add this
     const res = await fetch(url);
     if(!res.ok) throw new Error("Network error: " + res.status);
     const j = await res.json();

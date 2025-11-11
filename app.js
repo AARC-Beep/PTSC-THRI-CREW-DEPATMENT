@@ -103,12 +103,19 @@ async function loadDashboard(){
             const rows = data.slice(-5).reverse();
             box.innerHTML = "";
             rows.forEach(r=>{
-                const d = document.createElement("div");
-                d.className = "card-body";
-                const title = r.Vessel || r.Title || r.Subject || "";
-                d.innerHTML = `<small>${shortDate(r.Timestamp)} • <b>${escapeHtml(title)}</b></small>`;
-                box.appendChild(d);
-            });
+    const d = document.createElement("div");
+    d.className = "card-body";
+
+    // Prefer Date field over Timestamp
+    const dateField = r.Date ? shortDate(r.Date) : shortDate(r.Timestamp);
+
+    // Pick appropriate title field
+    const title = r.Vessel || r.Title || r.Subject || "";
+
+    d.innerHTML = `<small>${dateField} • <b>${escapeHtml(title)}</b></small>`;
+    box.appendChild(d);
+});
+
         }catch(err){
             box.innerHTML = "Error";
             console.error("loadDashboard", err);

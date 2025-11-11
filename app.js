@@ -400,9 +400,8 @@ async function handleAddPni(){
 let currentEdit = { sheet:null, uid:null, row:null };
 
 async function openEditModal(sheet, uid){
-    if(!uid){
-        alert("Cannot edit: UID missing for this row");
-        return;
+    console.log("DEBUG → openEditModal:", "sheet =", sheet, "UID =", uid);
+
     }
     try{
         const item = await apiFetch(new URLSearchParams({sheet, action:"getItem", UID:uid}));

@@ -277,6 +277,7 @@ function renderTrainingForm(){
     return `
       <input id="tr-subject" class="form-control mb-2" placeholder="Subject">
       <textarea id="tr-details" class="form-control mb-2" placeholder="Details"></textarea>
+      <input id="tr-date" type="date" class="form-control mb-2">
       <div class="mt-2">
         <button class="btn btn-success" onclick="handleAddTraining()">Save</button>
         <button class="btn btn-secondary" onclick="toggleForm('training')">Cancel</button>
@@ -288,6 +289,7 @@ function renderPniForm(){
     return `
       <input id="pn-subject" class="form-control mb-2" placeholder="Subject">
       <textarea id="pn-details" class="form-control mb-2" placeholder="Details"></textarea>
+      <input id="pn-date" type="date" class="form-control mb-2">
       <div class="mt-2">
         <button class="btn btn-success" onclick="handleAddPni()">Save</button>
         <button class="btn btn-secondary" onclick="toggleForm('pni')">Cancel</button>

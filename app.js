@@ -397,15 +397,17 @@ async function openEditModal(sheet, uid){
     console.log("DEBUG → openEditModal:", sheet, uid);
     if(!uid){ alert("Cannot edit: UID missing"); return; }
     try{
-        // NOTE: backend expects "getItem" (not get_item)
-        const item = await apiFetch(new URLSearchParams({ sheet, action: "getItem", UID: uid }));
+        // Match backend action exactly
+        const item = await apiFetch(new URLSearchParams({ sheet, action: "get_item", UID: uid }));
         if(!item){ alert("Item not found"); return; }
+
         currentEdit = { sheet, uid, row: item };
         let html = `<h5>Edit ${escapeHtml(sheet)}</h5>`;
+
         for(const k in item){
             if(k === "UID" || k === "Timestamp") continue;
             const val = escapeHtml(String(item[k] || ""));
-            const inputId = makeId(k, "edit-");
+            const inputId = makeId(k); // safe id
             if(k.toLowerCase().includes("details") || k.toLowerCase().includes("message")){
                 html += `<label>${escapeHtml(k)}</label><textarea id="${inputId}" class="form-control mb-2">${val}</textarea>`;
             } else if(k.toLowerCase().includes("date")){
@@ -415,10 +417,14 @@ async function openEditModal(sheet, uid){
                 html += `<label>${escapeHtml(k)}</label><input id="${inputId}" class="form-control mb-2" value="${val}">`;
             }
         }
-        html += `<div class="mt-2"><button class="btn btn-primary" onclick="submitEdit()">Save</button>
-                 <button class="btn btn-secondary" onclick="closeModal()">Cancel</button></div>`;
+
+        html += `<div class="mt-2">
+                    <button class="btn btn-primary" onclick="submitEdit()">Save</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                 </div>`;
+
         showModal(html);
-    }catch(err){
+    } catch(err){
         alert("Error loading item: " + err.message);
         console.error("openEditModal", err);
     }
@@ -450,17 +456,22 @@ function deleteRowConfirm(sheet, uid){
     deleteRow(sheet, uid);
 }
 
-async function deleteRow(sheet, uid){
-    if(!uid){ alert("Cannot delete: UID missing"); return; }
+async function deleteItem(sheet, uid){
+    if(!uid || !sheet){ alert("Cannot delete: UID or sheet missing"); return; }
+    if(!confirm("Are you sure you want to delete this item?")) return;
+
     try{
-        await apiFetch(new URLSearchParams({ sheet, action: "delete", UID: uid }));
+        const params = new URLSearchParams({ sheet, action: "delete", UID: uid });
+        await apiFetch(params);
         alert("Deleted successfully");
-        await loadAllData(); await loadDashboard();
-    }catch(err){
+        await loadAllData();       // refresh tables
+        await loadDashboard();     // refresh dashboard
+    } catch(err){
         alert("Delete failed: " + err.message);
-        console.error("deleteRow", err);
+        console.error("deleteItem", err);
     }
 }
+
 
 /* ----------------- CHAT ----------------- */
 async function loadChat(){
@@ -537,25 +548,19 @@ async function generateAllPDF(sheet){
 
 async function generateMonthlyPDF(sheet){
     try{
-        const sheets = sheet ? [sheet] : ["Vessel_Join", "Arrivals"];
-        const doc = new jsPDF('p','pt','a4');
-        let first = true;
-        for(const s of sheets){
-            const live = await apiFetch(new URLSearchParams({ sheet: s, action: "get" })).catch(()=>[]);
-            const archived = await apiFetch(new URLSearchParams({ sheet: "Archive_" + s, action: "get" })).catch(()=>[]);
-            const all = [...(live||[]), ...(archived||[])];
-            if(!all.length) continue;
-            if(!first) doc.addPage();
-            first = false;
-            doc.setFontSize(14);
-            doc.text(`${s} - Monthly Report`, 40, 40);
-            const headers = Object.keys(all[0]);
-            const body = all.map(r => headers.map(h => r[h] || ""));
-            doc.autoTable({ startY:70, head:[headers], body, styles:{fontSize:9} });
-        }
-        doc.save("Monthly_Report.pdf");
-    }catch(err){
-        alert("Monthly PDF failed: " + err.message);
+        const data = await apiFetch(new URLSearchParams({ sheet, action: "get" }));
+        if(!data || data.length === 0){ alert("No data found for PDF"); return; }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        const headers = Object.keys(data[0]).filter(h => h !== "UID");
+        const rows = data.map(row => headers.map(h => row[h] || ""));
+
+        doc.autoTable({ head: [headers], body: rows });
+        doc.save(`${sheet}_Monthly.pdf`);
+    } catch(err){
+        alert("PDF generation failed: " + err.message);
         console.error("generateMonthlyPDF", err);
     }
 }

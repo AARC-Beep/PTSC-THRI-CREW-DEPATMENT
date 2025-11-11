@@ -364,33 +364,28 @@ async function handleAddMemo(){
     }catch(e){ alert("Add failed: "+e.message); console.error(e); }
 }
 
-async function handleAddTraining(){
-    const fields = {
-        Subject: qs("tr-subject").value || "",
-        Details: qs("tr-details").value || ""
-    };
-    try{
-        await addRowData("Training", fields);
-        alert("Added Training");
-        toggleForm('training');
-        await loadAllData();
-        await loadDashboard();
-    }catch(e){ alert("Add failed: "+e.message); console.error(e); }
+async function addTraining(){
+    await addRowData("Training", {
+        Subject: qs("tr-subject").value,
+        Details: qs("tr-details").value,
+        Date: qs("tr-date").value
+    });
+    alert("Training added");
+    document.getElementById("training-form").style.display="none";
+    loadAllData();
 }
 
-async function handleAddPni(){
-    const fields = {
-        Subject: qs("pn-subject").value || "",
-        Details: qs("pn-details").value || ""
-    };
-    try{
-        await addRowData("Pni", fields);
-        alert("Added P&I / Event");
-        toggleForm('pni');
-        await loadAllData();
-        await loadDashboard();
-    }catch(e){ alert("Add failed: "+e.message); console.error(e); }
+async function addPni(){
+    await addRowData("Pni", {
+        Subject: qs("pn-subject").value,
+        Details: qs("pn-details").value,
+        Date: qs("pn-date").value
+    });
+    alert("P&I Event added");
+    document.getElementById("pni-form").style.display="none";
+    loadAllData();
 }
+
 
 /* ---------------------- EDIT ---------------------- */
 let currentEdit = { sheet:null, uid:null, row:null };

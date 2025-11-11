@@ -366,7 +366,7 @@ async function handleAddMemo(){
     }catch(e){ alert("Add failed: "+e.message); console.error(e); }
 }
 
-async function addTraining(){
+async function handleAddTraining(){
     await addRowData("Training", {
         Subject: qs("tr-subject").value,
         Details: qs("tr-details").value,
@@ -377,7 +377,7 @@ async function addTraining(){
     loadAllData();
 }
 
-async function addPni(){
+async function handleAddPni(){
     await addRowData("Pni", {
         Subject: qs("pn-subject").value,
         Details: qs("pn-details").value,

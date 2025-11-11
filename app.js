@@ -1,6 +1,7 @@
 /* ============================================================
-   PTSC / THRI Crew Dashboard - COMPLETE app.js (FINAL)
-   Compatible with Code.gs actions: get, get_item, add, update, delete, chat
+   PTSC / THRI Crew Dashboard - COMPLETE app.js (FIXED)
+   - Fixes getItem action mismatch and edit-field ID sanitization
+   - Compatible with Code.gs actions: get, getItem, add, update, delete, chat
 ============================================================= */
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyHJOMWdg01HTWdV1DoMajJV4oFja2YirfG1K56hnkQskFB9YSzfMGvahax8q0BIf9b/exec"; // <- replace if needed
@@ -15,7 +16,7 @@ async function apiFetch(params){
     const res = await fetch(url);
     if(!res.ok) throw new Error("Network error: " + res.status);
     const j = await res.json();
-    if(j.status !== "success") throw new Error(j.message || "API error");
+    if(j.status !== "success") throw new Error(j.data || j.message || "API error");
     return j.data;
 }
 
@@ -26,6 +27,11 @@ function escapeHtml(unsafe){
 function shortDate(v){
     const d = new Date(v);
     return isNaN(d) ? v : d.toLocaleDateString();
+}
+
+// create a safe id for DOM elements from header names (keeps deterministic mapping)
+function makeId(name, prefix = "edit-"){
+    return prefix + String(name).replace(/[^\w\-]/g, "_");
 }
 
 /* ----------------- LOGIN & SESSION ----------------- */
@@ -391,20 +397,22 @@ async function openEditModal(sheet, uid){
     console.log("DEBUG → openEditModal:", sheet, uid);
     if(!uid){ alert("Cannot edit: UID missing"); return; }
     try{
-        const item = await apiFetch(new URLSearchParams({ sheet, action: "get_item", UID: uid }));
+        // NOTE: backend expects "getItem" (not get_item)
+        const item = await apiFetch(new URLSearchParams({ sheet, action: "getItem", UID: uid }));
         if(!item){ alert("Item not found"); return; }
         currentEdit = { sheet, uid, row: item };
         let html = `<h5>Edit ${escapeHtml(sheet)}</h5>`;
         for(const k in item){
             if(k === "UID" || k === "Timestamp") continue;
             const val = escapeHtml(String(item[k] || ""));
+            const inputId = makeId(k, "edit-");
             if(k.toLowerCase().includes("details") || k.toLowerCase().includes("message")){
-                html += `<label>${escapeHtml(k)}</label><textarea id="edit-${escapeHtml(k)}" class="form-control mb-2">${val}</textarea>`;
+                html += `<label>${escapeHtml(k)}</label><textarea id="${inputId}" class="form-control mb-2">${val}</textarea>`;
             } else if(k.toLowerCase().includes("date")){
                 const v = val ? (new Date(val)).toISOString().slice(0,10) : "";
-                html += `<label>${escapeHtml(k)}</label><input id="edit-${escapeHtml(k)}" type="date" class="form-control mb-2" value="${v}">`;
+                html += `<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${v}">`;
             } else {
-                html += `<label>${escapeHtml(k)}</label><input id="edit-${escapeHtml(k)}" class="form-control mb-2" value="${val}">`;
+                html += `<label>${escapeHtml(k)}</label><input id="${inputId}" class="form-control mb-2" value="${val}">`;
             }
         }
         html += `<div class="mt-2"><button class="btn btn-primary" onclick="submitEdit()">Save</button>
@@ -422,7 +430,7 @@ async function submitEdit(){
         const p = new URLSearchParams({ sheet: currentEdit.sheet, action: "update", UID: currentEdit.uid });
         for(const k in currentEdit.row){
             if(k === "UID" || k === "Timestamp") continue;
-            const el = qs("edit-" + k);
+            const el = qs(makeId(k, "edit-"));
             if(el) p.set(k, el.value);
         }
         await apiFetch(p);
@@ -494,7 +502,8 @@ async function sendMessage(){
 async function generateItemPDF(sheet, uid){
     if(!uid){ alert("Cannot generate PDF: UID missing"); return; }
     try{
-        const item = await apiFetch(new URLSearchParams({ sheet, action: "get_item", UID: uid }));
+        // NOTE: backend expects 'getItem'
+        const item = await apiFetch(new URLSearchParams({ sheet, action: "getItem", UID: uid }));
         if(!item){ alert("Item not found"); return; }
         const doc = new jsPDF();
         doc.setFontSize(14);
@@ -588,7 +597,3 @@ async function addRowData(sheet, fieldsObj){
 /* ----------------- Optional help link handling ----------------- */
 const helpLink = document.querySelector('.sidebar a[data-tab="help"]');
 if(helpLink) helpLink.addEventListener("click", () => showTab("help"));
-
-/* ============================================================
-   End of file
-============================================================= */

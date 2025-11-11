@@ -393,6 +393,10 @@ async function addPni(){
 let currentEdit = { sheet:null, uid:null, row:null };
 
 async function openEditModal(sheet, uid){
+    if(!uid){
+        alert("Cannot edit: UID missing for this row");
+        return;
+    }
     try{
         const item = await apiFetch(new URLSearchParams({sheet, action:"getItem", UID:uid}));
         currentEdit = { sheet, uid, row: item };
@@ -417,21 +421,11 @@ async function openEditModal(sheet, uid){
     }
 }
 
-function showModal(content){
-    closeModal(); // ensure only one modal
-    const modal = document.createElement("div");
-    modal.id = "modal-backdrop";
-    modal.className = "modal-backdrop";
-    modal.innerHTML = `<div class="modal-box">${content}</div>`;
-    document.body.appendChild(modal);
-}
-
-function closeModal(){
-    const m = qs("modal-backdrop");
-    if(m) m.remove();
-}
-
 async function submitEdit(){
+    if(!currentEdit.uid){
+        alert("Cannot save: UID missing");
+        return;
+    }
     try{
         const p = new URLSearchParams({ sheet: currentEdit.sheet, action: "update", UID: currentEdit.uid });
         for(const k in currentEdit.row){
@@ -440,7 +434,7 @@ async function submitEdit(){
             if(el) p.set(k, el.value);
         }
         await apiFetch(p);
-        alert("Updated");
+        alert("Updated successfully");
         closeModal();
         await loadAllData();
         await loadDashboard();

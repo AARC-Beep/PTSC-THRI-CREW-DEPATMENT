@@ -1,7 +1,8 @@
 /* ============================================================
    PTSC / THRI Crew Dashboard - Full App JS (REVISED)
-   - Fixed edit/update flow and action parameter issues
-   - Dynamic forms, add/save, delete, chat, PDFs
+   - Fully compatible with updated Code.gs
+   - Fixes edit/update flow and Invalid action errors
+   - Includes Add, Edit, Delete, Chat, PDF, Sticky Notes
 ============================================================= */
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyHJOMWdg01HTWdV1DoMajJV4oFja2YirfG1K56hnkQskFB9YSzfMGvahax8q0BIf9b/exec";
@@ -181,7 +182,7 @@ async function loadTable(sheet, containerId, columns){
     }
 }
 
-/* ---------------- FORMS ---------------- */
+/* ------------------ ADD / FORM HANDLERS ------------------ */
 function toggleForm(id){
     const map = {
         join: { container: "join-form", html: renderJoinForm() },
@@ -201,47 +202,186 @@ function toggleForm(id){
         c.innerHTML = cfg.html;
         c.style.display = "block";
     }
-    const dateInputs = c.querySelectorAll("input[type=date]");
-    dateInputs.forEach(i=> { if(!i.value) i.value = new Date().toISOString().slice(0,10); });
+    // set default date to today
+    c.querySelectorAll("input[type=date]").forEach(i=> { if(!i.value) i.value = new Date().toISOString().slice(0,10); });
 }
 
-/* Render functions omitted here for brevity (same as your original code) */
+/* ------------------ FORM RENDERERS ------------------ */
+function renderJoinForm(){
+    return `
+      <div class="row g-2">
+        <div class="col-md-4"><input id="vj-vessel" class="form-control" placeholder="Vessel"></div>
+        <div class="col-md-4"><input id="vj-principal" class="form-control" placeholder="Principal"></div>
+        <div class="col-md-4"><input id="vj-port" class="form-control" placeholder="Port"></div>
+        <div class="col-md-4"><input id="vj-crew" class="form-control" placeholder="No. of Crew"></div>
+        <div class="col-md-4"><input id="vj-rank" class="form-control" placeholder="Rank"></div>
+        <div class="col-md-4"><input id="vj-date" type="date" class="form-control"></div>
+        <div class="col-md-4"><input id="vj-flight" class="form-control" placeholder="Flight"></div>
+      </div>
+      <div class="mt-2">
+        <button class="btn btn-success" onclick="handleAddVesselJoin()">Save</button>
+        <button class="btn btn-secondary" onclick="toggleForm('join')">Cancel</button>
+      </div>
+    `;
+}
 
-/* ---------------- ADD HANDLERS ---------------- */
+function renderArrivalsForm(){
+    return `
+      <div class="row g-2">
+        <div class="col-md-4"><input id="av-vessel" class="form-control" placeholder="Vessel"></div>
+        <div class="col-md-4"><input id="av-principal" class="form-control" placeholder="Principal"></div>
+        <div class="col-md-4"><input id="av-port" class="form-control" placeholder="Port"></div>
+        <div class="col-md-4"><input id="av-crew" class="form-control" placeholder="No. of Crew"></div>
+        <div class="col-md-4"><input id="av-rank" class="form-control" placeholder="Rank"></div>
+        <div class="col-md-4"><input id="av-date" type="date" class="form-control"></div>
+        <div class="col-md-4"><input id="av-flight" class="form-control" placeholder="Flight"></div>
+      </div>
+      <div class="mt-2">
+        <button class="btn btn-success" onclick="handleAddArrivals()">Save</button>
+        <button class="btn btn-secondary" onclick="toggleForm('arrivals')">Cancel</button>
+      </div>
+    `;
+}
+
+function renderUpdatesForm(){
+    return `
+      <input id="up-title" class="form-control mb-2" placeholder="Title">
+      <textarea id="up-details" class="form-control mb-2" placeholder="Details"></textarea>
+      <input id="up-date" type="date" class="form-control mb-2">
+      <div class="mt-2">
+        <button class="btn btn-success" onclick="handleAddUpdate()">Save</button>
+        <button class="btn btn-secondary" onclick="toggleForm('updates')">Cancel</button>
+      </div>
+    `;
+}
+
+function renderMemoForm(){
+    return `
+      <input id="memo-title" class="form-control mb-2" placeholder="Title">
+      <textarea id="memo-details" class="form-control mb-2" placeholder="Details"></textarea>
+      <input id="memo-date" type="date" class="form-control mb-2">
+      <div class="mt-2">
+        <button class="btn btn-success" onclick="handleAddMemo()">Save</button>
+        <button class="btn btn-secondary" onclick="toggleForm('memo')">Cancel</button>
+      </div>
+    `;
+}
+
+function renderTrainingForm(){
+    return `
+      <input id="tr-subject" class="form-control mb-2" placeholder="Subject">
+      <textarea id="tr-details" class="form-control mb-2" placeholder="Details"></textarea>
+      <input id="tr-date" type="date" class="form-control mb-2">
+      <div class="mt-2">
+        <button class="btn btn-success" onclick="handleAddTraining()">Save</button>
+        <button class="btn btn-secondary" onclick="toggleForm('training')">Cancel</button>
+      </div>
+    `;
+}
+
+function renderPniForm(){
+    return `
+      <input id="pn-subject" class="form-control mb-2" placeholder="Subject">
+      <textarea id="pn-details" class="form-control mb-2" placeholder="Details"></textarea>
+      <input id="pn-date" type="date" class="form-control mb-2">
+      <div class="mt-2">
+        <button class="btn btn-success" onclick="handleAddPni()">Save</button>
+        <button class="btn btn-secondary" onclick="toggleForm('pni')">Cancel</button>
+      </div>
+    `;
+}
+
+/* ------------------ ADD HANDLERS ------------------ */
 async function handleAddVesselJoin(){
-    const fields = {
-        Vessel: qs("vj-vessel").value || "",
-        Principal: qs("vj-principal").value || "",
-        Port: qs("vj-port").value || "",
-        "No. of Crew": qs("vj-crew").value || "",
-        Rank: qs("vj-rank").value || "",
-        Date: qs("vj-date").value || "",
-        Flight: qs("vj-flight").value || ""
-    };
-    try{
-        await addRowData("Vessel_Join", fields);
-        alert("Added Vessel Joining");
-        toggleForm('join');
-        await loadAllData();
-        await loadDashboard();
-    }catch(e){ alert("Add failed: "+e.message); console.error(e); }
+    await addRowData("Vessel_Join", {
+        Vessel: qs("vj-vessel").value,
+        Principal: qs("vj-principal").value,
+        Port: qs("vj-port").value,
+        "No. of Crew": qs("vj-crew").value,
+        Rank: qs("vj-rank").value,
+        Date: qs("vj-date").value,
+        Flight: qs("vj-flight").value
+    });
+    alert("Added Vessel Joining");
+    toggleForm('join');
+    await loadAllData();
+    await loadDashboard();
 }
 
-// Add handlers for arrivals, updates, memo, training, pni (same structure)
+async function handleAddArrivals(){
+    await addRowData("Arrivals", {
+        Vessel: qs("av-vessel").value,
+        Principal: qs("av-principal").value,
+        Port: qs("av-port").value,
+        "No. of Crew": qs("av-crew").value,
+        Rank: qs("av-rank").value,
+        Date: qs("av-date").value,
+        Flight: qs("av-flight").value
+    });
+    alert("Added Arrival");
+    toggleForm('arrivals');
+    await loadAllData();
+    await loadDashboard();
+}
 
-/* ---------------------- EDIT ---------------------- */
+async function handleAddUpdate(){
+    await addRowData("Updates", {
+        Title: qs("up-title").value,
+        Details: qs("up-details").value,
+        Date: qs("up-date").value
+    });
+    alert("Added Update");
+    toggleForm('updates');
+    await loadAllData();
+    await loadDashboard();
+}
+
+async function handleAddMemo(){
+    await addRowData("Memo", {
+        Title: qs("memo-title").value,
+        Details: qs("memo-details").value,
+        Date: qs("memo-date").value
+    });
+    alert("Added Memo");
+    toggleForm('memo');
+    await loadAllData();
+    await loadDashboard();
+}
+
+async function handleAddTraining(){
+    await addRowData("Training", {
+        Subject: qs("tr-subject").value,
+        Details: qs("tr-details").value,
+        Date: qs("tr-date").value
+    });
+    alert("Training added");
+    qs("training-form").style.display="none";
+    await loadAllData();
+}
+
+async function handleAddPni(){
+    await addRowData("Pni", {
+        Subject: qs("pn-subject").value,
+        Details: qs("pn-details").value,
+        Date: qs("pn-date").value
+    });
+    alert("P&I Event added");
+    qs("pni-form").style.display="none";
+    await loadAllData();
+}
+
+/* ------------------ EDIT / DELETE / CHAT / PDF ------------------ */
 let currentEdit = { sheet:null, uid:null, row:null };
 
 async function openEditModal(sheet, uid){
-    const params = new URLSearchParams({ sheet, action:"get_item", UID: uid });
     try{
-        const item = await apiFetch(params);
+        const item = await apiFetch(new URLSearchParams({sheet, action:"get_item", UID:uid}));
         currentEdit = { sheet, uid, row: item };
         let html = `<h5>Edit ${sheet}</h5>`;
         for(const k in item){
-            if(k === "UID" || k === "Timestamp") continue;
-            const val = escapeHtml(String(item[k] || ""));
-            if(k.toLowerCase().includes("details") || k.toLowerCase().includes("message")){
+            if(k==="UID"||k==="Timestamp") continue;
+            const val = escapeHtml(String(item[k]||""));
+            if(k.toLowerCase().includes("details")||k.toLowerCase().includes("message")){
                 html += `<label>${k}</label><textarea id="edit-${k}" class="form-control mb-2">${val}</textarea>`;
             } else if(k.toLowerCase().includes("date")){
                 const v = val ? (new Date(val)).toISOString().slice(0,10) : "";
@@ -259,18 +399,15 @@ async function openEditModal(sheet, uid){
 }
 
 async function submitEdit(){
-    if(!currentEdit.uid){
-        alert("Cannot save: UID missing");
-        return;
-    }
+    if(!currentEdit.uid){ alert("Cannot save: UID missing"); return; }
     try{
-        const params = new URLSearchParams({ sheet: currentEdit.sheet, action:"update", UID: currentEdit.uid });
+        const p = new URLSearchParams({ sheet: currentEdit.sheet, action: "update", UID: currentEdit.uid });
         for(const k in currentEdit.row){
-            if(k === "UID" || k === "Timestamp") continue;
+            if(k==="UID"||k==="Timestamp") continue;
             const el = qs("edit-" + k);
-            if(el) params.set(k, el.value);
+            if(el) p.set(k, el.value);
         }
-        await apiFetch(params);
+        await apiFetch(p);
         alert("Updated successfully");
         closeModal();
         await loadAllData();
@@ -281,7 +418,6 @@ async function submitEdit(){
     }
 }
 
-/* ---------------------- DELETE ---------------------- */
 function deleteRowConfirm(sheet, uid){
     if(!confirm("Delete this item? It will be moved to Archive.")) return;
     deleteRow(sheet, uid);
@@ -299,7 +435,6 @@ async function deleteRow(sheet, uid){
     }
 }
 
-/* ---------------------- CHAT ---------------------- */
 async function loadChat(){
     try{
         const box = qs("chatboard");
@@ -333,7 +468,7 @@ async function sendMessage(){
     }
 }
 
-/* ---------------------- PDF ---------------------- */
+/* ---------------- PDF ---------------- */
 async function generateItemPDF(sheet, uid){
     try{
         const item = await apiFetch(new URLSearchParams({sheet, action:"get_item", UID:uid}));
@@ -349,9 +484,29 @@ async function generateItemPDF(sheet, uid){
     }
 }
 
-/* ----------------- Utility addRow wrapper ----------------- */
+/* ----------------- ADD ROW WRAPPER ---------------- */
 async function addRowData(sheet, fieldsObj){
     const params = new URLSearchParams({ sheet, action: "add" });
     for(const k in fieldsObj) params.set(k, fieldsObj[k]);
     return await apiFetch(params);
+}
+
+/* ---------------- MODAL HELPERS ---------------- */
+function showModal(html){
+    let m = qs("app-modal");
+    if(!m){
+        m = document.createElement("div");
+        m.id = "app-modal";
+        m.style.cssText="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;justify-content:center;align-items:center;z-index:9999;";
+        m.innerHTML = `<div id="app-modal-content" style="background:#fff;padding:20px;max-width:600px;width:90%;border-radius:5px;"></div>`;
+        document.body.appendChild(m);
+        m.addEventListener("click", e=> { if(e.target===m) closeModal(); });
+    }
+    qs("app-modal-content").innerHTML = html;
+    m.style.display="flex";
+}
+
+function closeModal(){
+    const m = qs("app-modal");
+    if(m) m.style.display="none";
 }

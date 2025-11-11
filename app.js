@@ -401,6 +401,11 @@ let currentEdit = { sheet:null, uid:null, row:null };
 
 async function openEditModal(sheet, uid){
     console.log("DEBUG → openEditModal:", "sheet =", sheet, "UID =", uid);
+   console.log("FULL REQUEST →", new URLSearchParams({ 
+    sheet, 
+    action:"getItem", 
+    UID:uid 
+}).toString());
 
     try{
         const item = await apiFetch(new URLSearchParams({sheet, action:"getItem", UID:uid}));

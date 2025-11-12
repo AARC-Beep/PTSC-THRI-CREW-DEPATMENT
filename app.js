@@ -186,8 +186,7 @@ async function loadTable(sheet, containerId, columns){
       tr.innerHTML += `<td>
         <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEditModal('${sheet}','${uidSafe}')">Edit</button>
         <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRowConfirm('${sheet}','${uidSafe}')">Delete</button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="generateItemPDF('${sheet}','${uidSafe}')">PDF</button>
-      </td>`;
+        </td>`;
 
       tbody.appendChild(tr);
     });

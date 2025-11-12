@@ -46,104 +46,18 @@
 <!-- MAIN CONTENT -->
 <div class="main-content">
 
- <!-- Dashboard Overview -->
-<div class="dashboard-overview">
-    <h2 class="dashboard-title">Crew Joining</h2>
-    <button onclick="generateMonthlyPDF('Vessel_Join')">Generate Monthly PDF</button>
-    <table id="Vessel_Join" class="table table-striped">
-        <thead>
-            <tr>
-                <th>Vessel</th>
-                <th>Principal</th>
-                <th>Port</th>
-                <th>No. of Crew</th>
-                <th>Rank</th>
-                <th>Date</th>
-                <th>Flight</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
-<div class="dashboard-overview">
-    <h2 class="dashboard-title">Crew Arrivals</h2>
-    <button onclick="generateMonthlyPDF('Arrivals')">Generate Monthly PDF</button>
-    <table id="Arrivals" class="table table-striped">
-        <thead>
-            <tr>
-                <th>Vessel</th>
-                <th>Principal</th>
-                <th>Port</th>
-                <th>No. of Crew</th>
-                <th>Rank</th>
-                <th>Date</th>
-                <th>Flight</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
-<div class="dashboard-overview">
-    <h2 class="dashboard-title">Daily Updates</h2>
-    <button onclick="generateMonthlyPDF('Updates')">Generate Monthly PDF</button>
-    <table id="Updates" class="table table-striped">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Update</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
-<div class="dashboard-overview">
-    <h2 class="dashboard-title">Memo</h2>
-    <button onclick="generateMonthlyPDF('Memo')">Generate Monthly PDF</button>
-    <table id="Memo" class="table table-striped">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Subject</th>
-                <th>Details</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
-<div class="dashboard-overview">
-    <h2 class="dashboard-title">Training</h2>
-    <button onclick="generateMonthlyPDF('Training')">Generate Monthly PDF</button>
-    <table id="Training" class="table table-striped">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Training</th>
-                <th>Participants</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
-<div class="dashboard-overview">
-    <h2 class="dashboard-title">P&I Events</h2>
-    <button onclick="generateMonthlyPDF('Pni')">Generate Monthly PDF</button>
-    <table id="Pni" class="table table-striped">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Event</th>
-                <th>Details</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="tab-window active">
+    <h3>Dashboard Overview</h3>
+    <div class="row">
+      <div class="col-md-4"><div class="card dash-card"><h5>Crew Joining</h5><div id="dash-join"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card"><h5>Crew Arrivals</h5><div id="dash-arrivals"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card"><h5>Daily Updates</h5><div id="dash-updates"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card"><h5>Memo</h5><div id="dash-memo"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card"><h5>Training</h5><div id="dash-training"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card"><h5>P&I Events</h5><div id="dash-pni"></div></div></div>
+    </div>
+  </div>
 
   <!-- CREW JOINING -->
   <div id="crew-join" class="tab-window">

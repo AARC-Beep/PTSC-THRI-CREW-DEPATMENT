@@ -540,6 +540,7 @@ async function generateAllPDF(sheet, titleText) {
   try {
     const base = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec";
 
+    // ✅ Fetch live + archive data
     const live = await apiFetch(`${base}?sheet=${sheet}&action=get`).catch(() => []);
     const archived = await apiFetch(`${base}?sheet=Archive_${sheet}&action=get`).catch(() => []);
     const all = [...(live || []), ...(archived || [])];
@@ -572,13 +573,29 @@ async function generateAllPDF(sheet, titleText) {
       });
     }
 
-    const safeTitle = titleText.replace(/[^\w\s-]/g, "_").replace(/\s+/g, "_");
+    const safeTitle = (titleText || sheet)
+      .replace(/[^\w\s-]/g, "_")
+      .replace(/\s+/g, "_");
     doc.save(`${safeTitle}.pdf`);
 
   } catch (err) {
-    alert("All PDF failed: " + err.message);
+    alert("PDF export failed: " + err.message);
     console.error("generateAllPDF error", err);
   }
+}
+
+/* --------------------- MONTHLY EXPORT --------------------- */
+function generateMonthlyPDF(type = "Join") {
+  const now = new Date();
+  const month = now.toLocaleString('en-US', { month: 'long' });
+  const year = now.getFullYear();
+
+  // ✅ Auto-fix type so it doesn’t double “Vessel_”
+  const base = type.startsWith("Vessel_") ? type : `Vessel_${type}`;
+  const sheetName = `${base}_Report_${month}_${year}`;
+  const titleText = `PTSC / THRI — ${base.replace(/_/g, " ")} Report (${month} ${year})`;
+
+  generateAllPDF(sheetName, titleText);
 }
 
 /* --------------------- MONTHLY EXPORT --------------------- */

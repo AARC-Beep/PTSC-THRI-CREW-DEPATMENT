@@ -5,43 +5,41 @@
    - Make sure GAS_URL points to your deployed Apps Script web app
 ============================================================= */
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec"; // <-- replace if needed
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec"; // <-- Replace with your Apps Script URL
 
-/* --------------------- Utilities --------------------- */
-function qs(id){ return document.getElementById(id); }
-
-function debugLog(...args){
-  if(window.console && console.log) console.log(...args);
+// Fetch data for a sheet and populate the table
+async function fetchData(sheetName) {
+    const tableBody = document.querySelector(`#${sheetName} tbody`);
+    tableBody.innerHTML = ""; // Clear existing rows
+    try {
+        const response = await fetch(`${SCRIPT_URL}?sheet=${sheetName}`);
+        const data = await response.json();
+        if (data.status === "success") {
+            data.records.forEach(row => {
+                const tr = document.createElement("tr");
+                Object.values(row).forEach(val => {
+                    const td = document.createElement("td");
+                    td.textContent = val;
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        } else {
+            tableBody.innerHTML = `<tr><td colspan="10">${data.message}</td></tr>`;
+        }
+    } catch (err) {
+        console.error(err);
+        tableBody.innerHTML = `<tr><td colspan="10">Error loading data</td></tr>`;
+    }
 }
 
-async function apiFetch(params){
-  // params is URLSearchParams or object convertible via toString()
-  const url = `${GAS_URL}?${params.toString()}`;
-  debugLog("DEBUG → apiFetch URL:", url);
-  const res = await fetch(url).catch(e => { throw new Error("Network fetch failed: " + e.message); });
-  if(!res.ok) throw new Error("Network error: " + res.status);
-  const j = await res.json().catch(e => { throw new Error("Invalid JSON response"); });
-  if(j.status && j.status !== "success") throw new Error(j.message || "API error");
-  // Some backends return {status:'success', data: ...}
-  return j.data === undefined ? j : j.data;
+// Generate monthly PDF
+function generateMonthlyPDF(sheetName) {
+    window.open(`${SCRIPT_URL}?sheet=${sheetName}&action=generatePDF`, "_blank");
 }
 
-function escapeHtml(unsafe){
-  if(unsafe === null || unsafe === undefined) return "";
-  return String(unsafe).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-}
-
-function shortDate(v){
-  if(!v) return "";
-  const d = new Date(v);
-  if(isNaN(d)) return String(v);
-  return d.toLocaleDateString();
-}
-
-// safe DOM id generator for header names or field names
-function makeId(name, prefix = "edit-"){
-  return prefix + String(name).replace(/[^\w\-]/g, "_");
-}
+// Initialize all tables
+["Vessel_Join", "Arrivals", "Updates", "Memo", "Training", "Pni"].forEach(fetchData);
 
 /* --------------------- LOGIN --------------------- */
 async function loginUser(){

@@ -56,31 +56,30 @@ function makeId(name, prefix = "edit-"){
 }
 
 /* --------------------- LOGIN --------------------- */
-function loginUser(sheet, params) {
-  const username = params.username;
-  const password = params.password;
-  const data = sheet.getDataRange().getValues();
-  const headers = data.shift();
-  for (let row of data) {
-    const userObj = {};
-    headers.forEach((h,i) => userObj[h] = row[i]);
-    if (userObj.Username === username && userObj.Password === password) {
-      return {status:'success', user: userObj};
-    }
-  }
-  return {status:'error', message:'Invalid username or password'};
-}
+async function loginUser() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
 
-document.addEventListener("DOMContentLoaded", ()=>{
-  // Hide login overlay if already logged in
-  if(sessionStorage.getItem("loggedInUser")){
-    qs("login-overlay") && (qs("login-overlay").style.display = "none");
-    showTab("dashboard");
-    initReload();
-  } else {
-    qs("login-overlay") && (qs("login-overlay").style.display = "flex");
+  try {
+    const data = await apiFetch({
+      sheet: "Users",       // <-- must match your sheet name for user credentials
+      action: "login",      // <-- required
+      username: username,
+      password: password
+    });
+
+    if(data.status === "success") {
+      console.log("Login success:", data.user);
+      // TODO: proceed to dashboard
+    } else {
+      console.error("Login failed:", data.message);
+      alert("Login failed: " + data.message);
+    }
+  } catch (err) {
+    console.error("Login failed:", err);
+    alert("Login failed: " + err.message);
   }
-});
+}
 
 /* --------------------- TAB NAV --------------------- */
 function showTab(id){

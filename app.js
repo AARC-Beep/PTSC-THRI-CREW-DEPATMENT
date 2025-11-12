@@ -15,14 +15,22 @@ function debugLog(...args){
 }
 
 async function apiFetch(params) {
-  const baseURL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+  // Use your actual deployed Web App URL
+  const baseURL = GAS_URL; // <-- already defined at the top
   const url = new URL(baseURL);
+
+  // Add all parameters to the URL
   Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+  console.log("DEBUG → apiFetch URL:", url.toString());
 
   try {
     const response = await fetch(url);
+    if (!response.ok) throw new Error('Network response was not ok');
+
     const data = await response.json();
     if (data.status === 'error') throw new Error(data.message);
+
     return data;
   } catch (err) {
     console.error('apiFetch error:', err);

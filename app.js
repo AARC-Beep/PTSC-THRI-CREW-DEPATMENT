@@ -531,23 +531,21 @@ async function sendMessage(){
 
 /* --------------------- PDF --------------------- */
 function getJsPdf() {
-  // Support multiple loader styles
   if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
   if (window.jsPDF) return window.jsPDF;
   return null;
 }
 
-async function generateAllPDF(sheet) { 
+async function generateAllPDF(sheet, titleText) { 
   try {
     const base = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec";
 
-    // ✅ Corrected fetch URLs
     const live = await apiFetch(`${base}?sheet=${sheet}&action=get`).catch(() => []);
     const archived = await apiFetch(`${base}?sheet=Archive_${sheet}&action=get`).catch(() => []);
     const all = [...(live || []), ...(archived || [])];
 
     if (!all.length) {
-      alert("No records to export.");
+      alert("No records to export for " + sheet);
       return;
     }
 
@@ -558,7 +556,8 @@ async function generateAllPDF(sheet) {
     }
 
     const doc = new jsPDFCtor('p', 'pt', 'a4');
-    doc.text(`${sheet} — All Entries`, 40, 40);
+    doc.setFontSize(14);
+    doc.text(titleText || sheet, 40, 40);
 
     const headers = Object.keys(all[0]);
     const body = all.map(r => headers.map(h => r[h] || ""));
@@ -569,15 +568,30 @@ async function generateAllPDF(sheet) {
         head: [headers],
         body,
         styles: { fontSize: 8, cellPadding: 3 },
-        headStyles: { fillColor: [0, 57, 107] }
+        headStyles: { fillColor: [0, 57, 107], textColor: 255 }
       });
     }
 
-    doc.save(`${sheet}_all.pdf`);
+    const safeTitle = titleText.replace(/[^\w\s-]/g, "_").replace(/\s+/g, "_");
+    doc.save(`${safeTitle}.pdf`);
+
   } catch (err) {
     alert("All PDF failed: " + err.message);
     console.error("generateAllPDF error", err);
   }
+}
+
+/* --------------------- MONTHLY EXPORT --------------------- */
+function generateMonthlyPDF(type = "Join") {
+  const now = new Date();
+  const month = now.toLocaleString('en-US', { month: 'long' });
+  const year = now.getFullYear();
+  
+  // ✅ Dynamically build the sheet name
+  const sheetName = `Vessel_${type}_Report_${month}_${year}`;
+  const titleText = `Vessel ${type} Report — ${month} ${year}`;
+  
+  generateAllPDF(sheetName, titleText);
 }
 
 /* --------------------- STICKY NOTE --------------------- */

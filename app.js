@@ -530,53 +530,53 @@ async function sendMessage(){
 }
 
 /* --------------------- PDF --------------------- */
-function getJsPdf(){
+function getJsPdf() {
   // Support multiple loader styles
-  if(window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
-  if(window.jsPDF) return window.jsPDF;
+  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  if (window.jsPDF) return window.jsPDF;
   return null;
 }
 
-async function generateItemPDF(sheet, uid){
-  if(!uid){ alert("Cannot generate PDF: UID missing"); return; }
-  try{
-    const item = await apiFetch(new URLSearchParams({ sheet, action: "getItem", UID: uid }));
-    if(!item){ alert("Item not found"); return; }
-    const jsPDFCtor = getJsPdf();
-    if(!jsPDFCtor){ alert("jsPDF not loaded"); return; }
-    const doc = new jsPDFCtor();
-    doc.setFontSize(14);
-    doc.text(`${sheet} Record`, 14, 20);
-    const rows = Object.entries(item).map(([k,v]) => [k, String(v)]);
-    if(doc.autoTable) doc.autoTable({ startY: 30, head: [["Field","Value"]], body: rows });
-    else {
-      let y=30;
-      rows.forEach(r=> { doc.text(`${r[0]}: ${r[1]}`, 14, y); y+=10; });
-    }
-    doc.save(`${sheet}_${uid}.pdf`);
-  }catch(err){
-    alert("PDF failed: " + err.message);
-    debugLog("generateItemPDF error", err);
-  }
-}
+async function generateAllPDF(sheet) { 
+  try {
+    const base = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec";
 
-async function generateAllPDF(sheet){
-  try{
-    const live = await apiFetch(new URLSearchParams({ sheet, action: "get" })).catch(()=>[]);
-    const archived = await apiFetch(new URLSearchParams({ sheet: "Archive_"+sheet, action: "get" })).catch(()=>[]);
-    const all = [...(live||[]), ...(archived||[])];
-    if(!all.length){ alert("No records to export."); return; }
+    // ✅ Corrected fetch URLs
+    const live = await apiFetch(`${base}?sheet=${sheet}&action=get`).catch(() => []);
+    const archived = await apiFetch(`${base}?sheet=Archive_${sheet}&action=get`).catch(() => []);
+    const all = [...(live || []), ...(archived || [])];
+
+    if (!all.length) {
+      alert("No records to export.");
+      return;
+    }
+
     const jsPDFCtor = getJsPdf();
-    if(!jsPDFCtor){ alert("jsPDF not loaded"); return; }
-    const doc = new jsPDFCtor('p','pt','a4');
+    if (!jsPDFCtor) {
+      alert("jsPDF not loaded");
+      return;
+    }
+
+    const doc = new jsPDFCtor('p', 'pt', 'a4');
     doc.text(`${sheet} — All Entries`, 40, 40);
+
     const headers = Object.keys(all[0]);
     const body = all.map(r => headers.map(h => r[h] || ""));
-    if(doc.autoTable) doc.autoTable({ startY:60, head:[headers], body });
+
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: 60,
+        head: [headers],
+        body,
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [0, 57, 107] }
+      });
+    }
+
     doc.save(`${sheet}_all.pdf`);
-  }catch(err){
+  } catch (err) {
     alert("All PDF failed: " + err.message);
-    debugLog("generateAllPDF error", err);
+    console.error("generateAllPDF error", err);
   }
 }
 

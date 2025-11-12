@@ -540,7 +540,7 @@ async function generateAllPDF(sheet, titleText) {
   try {
     const base = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec";
 
-    // ✅ Fetch live + archive data
+    // ✅ fetch live + archive data
     const live = await apiFetch(`${base}?sheet=${sheet}&action=get`).catch(() => []);
     const archived = await apiFetch(`${base}?sheet=Archive_${sheet}&action=get`).catch(() => []);
     const all = [...(live || []), ...(archived || [])];
@@ -556,7 +556,7 @@ async function generateAllPDF(sheet, titleText) {
       return;
     }
 
-    const doc = new jsPDFCtor('p', 'pt', 'a4');
+    const doc = new jsPDFCtor('p','pt','a4');
     doc.setFontSize(14);
     doc.text(titleText || sheet, 40, 40);
 
@@ -569,19 +569,40 @@ async function generateAllPDF(sheet, titleText) {
         head: [headers],
         body,
         styles: { fontSize: 8, cellPadding: 3 },
-        headStyles: { fillColor: [0, 57, 107], textColor: 255 }
+        headStyles: { fillColor: [0,57,107], textColor: 255 }
       });
     }
 
-    const safeTitle = (titleText || sheet)
-      .replace(/[^\w\s-]/g, "_")
-      .replace(/\s+/g, "_");
+    const safeTitle = (titleText || sheet).replace(/[^\w\s-]/g,"_").replace(/\s+/g,"_");
     doc.save(`${safeTitle}.pdf`);
 
-  } catch (err) {
-    alert("PDF export failed: " + err.message);
+  } catch(err) {
+    alert("All PDF failed: " + err.message);
     console.error("generateAllPDF error", err);
   }
+}
+
+/* --------------------- MONTHLY PDF --------------------- */
+function generateMonthlyPDF(type = "Join") {
+  // Map type to actual sheet names
+  const sheetMap = {
+    "Join": "Vessel_join",
+    "Arrival": "Arrivals"
+  };
+
+  const sheetName = sheetMap[type];
+  if(!sheetName){
+    alert("Unknown PDF type: " + type);
+    return;
+  }
+
+  const now = new Date();
+  const month = now.toLocaleString('en-US',{month:"long"});
+  const year = now.getFullYear();
+
+  const titleText = `PTSC / THRI — ${type} Crew Report (${month} ${year})`;
+
+  generateAllPDF(sheetName, titleText);
 }
 
 /* --------------------- MONTHLY EXPORT --------------------- */

@@ -56,29 +56,19 @@ function makeId(name, prefix = "edit-"){
 }
 
 /* --------------------- LOGIN --------------------- */
-async function loginUser(){
-  const u = qs("login-username")?.value?.trim() || "";
-  const p = qs("login-password")?.value?.trim() || "";
-  const err = qs("login-error");
-  if(err) err.innerText = "";
-
-  if(!u || !p){ if(err) err.innerText = "Enter username and password"; return; }
-
-  try{
-    const users = await apiFetch(new URLSearchParams({ sheet: "Users", action: "get" }));
-    const match = (users || []).find(x => String(x.Username || "").trim().toLowerCase() === u.toLowerCase() &&
-                                           String(x.Password || "").trim() === p);
-    if(!match){ if(err) err.innerText = "Invalid username or password"; return; }
-
-    sessionStorage.setItem("loggedInUser", match.Username);
-    sessionStorage.setItem("userRole", match.Role || "");
-    qs("login-overlay") && (qs("login-overlay").style.display = "none");
-    showTab("dashboard");
-    await initReload();
-  }catch(e){
-    debugLog("loginUser error:", e);
-    if(err) err.innerText = "Login failed: " + e.message;
+function loginUser(sheet, params) {
+  const username = params.username;
+  const password = params.password;
+  const data = sheet.getDataRange().getValues();
+  const headers = data.shift();
+  for (let row of data) {
+    const userObj = {};
+    headers.forEach((h,i) => userObj[h] = row[i]);
+    if (userObj.Username === username && userObj.Password === password) {
+      return {status:'success', user: userObj};
+    }
   }
+  return {status:'error', message:'Invalid username or password'};
 }
 
 document.addEventListener("DOMContentLoaded", ()=>{

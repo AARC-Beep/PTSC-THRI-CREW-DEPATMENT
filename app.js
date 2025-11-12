@@ -536,100 +536,65 @@ function getJsPdf() {
   return null;
 }
 
-async function generateAllPDF(sheet, titleText) { 
-  try {
-    const base = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec";
+/* --------------------- HELPER: Format Month-Year --------------------- */
+function getMonthYear(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return "Unknown Month";
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
 
-    // ✅ fetch live + archive data
-    const live = await apiFetch(`${base}?sheet=${sheet}&action=get`).catch(() => []);
-    const archived = await apiFetch(`${base}?sheet=Archive_${sheet}&action=get`).catch(() => []);
-    const all = [...(live || []), ...(archived || [])];
+/* --------------------- GENERATE PDF --------------------- */
+async function generateMonthlyGroupedPDF(type = "Join") {
+  const sheetMap = { "Join": "Vessel_join", "Arrival": "Arrivals" };
+  const sheetName = sheetMap[type];
+  if (!sheetName) { alert("Unknown PDF type: " + type); return; }
 
-    if (!all.length) {
-      alert("No records to export for " + sheet);
-      return;
-    }
+  const base = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec";
 
-    const jsPDFCtor = getJsPdf();
-    if (!jsPDFCtor) {
-      alert("jsPDF not loaded");
-      return;
-    }
+  // ✅ Fetch live + archive
+  const live = await apiFetch(`${base}?sheet=${sheetName}&action=get`).catch(()=>[]);
+  const archived = await apiFetch(`${base}?sheet=Archive_${sheetName}&action=get`).catch(()=>[]);
+  const all = [...(live||[]), ...(archived||[])];
 
-    const doc = new jsPDFCtor('p','pt','a4');
-    doc.setFontSize(14);
-    doc.text(titleText || sheet, 40, 40);
+  if (!all.length) { alert("No records to export for " + sheetName); return; }
 
-    const headers = Object.keys(all[0]);
-    const body = all.map(r => headers.map(h => r[h] || ""));
+  const jsPDFCtor = getJsPdf();
+  if (!jsPDFCtor) { alert("jsPDF not loaded"); return; }
+  const doc = new jsPDFCtor('p','pt','a4');
 
-    if (doc.autoTable) {
+  doc.setFontSize(14);
+  doc.text(`PTSC / THRI — ${type} Crew Report`, 40, 40);
+
+  // Group records by month-year
+  const monthGroups = {};
+  all.forEach(r => {
+    const month = getMonthYear(r.Date || r.date || r.Dates || r.Date_Of_Crew || "Unknown");
+    if (!monthGroups[month]) monthGroups[month] = [];
+    monthGroups[month].push(r);
+  });
+
+  let currentY = 60;
+  const headers = Object.keys(all[0]);
+
+  if (doc.autoTable) {
+    for (const [month, rows] of Object.entries(monthGroups)) {
+      doc.setFontSize(12);
+      doc.text(month, 40, currentY);
+      currentY += 10;
+
       doc.autoTable({
-        startY: 60,
+        startY: currentY,
         head: [headers],
-        body,
+        body: rows.map(r => headers.map(h => r[h]||"")),
         styles: { fontSize: 8, cellPadding: 3 },
         headStyles: { fillColor: [0,57,107], textColor: 255 }
       });
+
+      currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : currentY + 100;
     }
-
-    const safeTitle = (titleText || sheet).replace(/[^\w\s-]/g,"_").replace(/\s+/g,"_");
-    doc.save(`${safeTitle}.pdf`);
-
-  } catch(err) {
-    alert("All PDF failed: " + err.message);
-    console.error("generateAllPDF error", err);
-  }
-}
-
-/* --------------------- MONTHLY PDF --------------------- */
-function generateMonthlyPDF(type = "Join") {
-  // Map type to actual sheet names
-  const sheetMap = {
-    "Join": "Vessel_join",
-    "Arrival": "Arrivals"
-  };
-
-  const sheetName = sheetMap[type];
-  if(!sheetName){
-    alert("Unknown PDF type: " + type);
-    return;
   }
 
-  const now = new Date();
-  const month = now.toLocaleString('en-US',{month:"long"});
-  const year = now.getFullYear();
-
-  const titleText = `PTSC / THRI — ${type} Crew Report (${month} ${year})`;
-
-  generateAllPDF(sheetName, titleText);
-}
-
-/* --------------------- MONTHLY EXPORT --------------------- */
-function generateMonthlyPDF(type = "Join") {
-  const now = new Date();
-  const month = now.toLocaleString('en-US', { month: 'long' });
-  const year = now.getFullYear();
-
-  // ✅ Auto-fix type so it doesn’t double “Vessel_”
-  const base = type.startsWith("Vessel_") ? type : `Vessel_${type}`;
-  const sheetName = `${base}_Report_${month}_${year}`;
-  const titleText = `PTSC / THRI — ${base.replace(/_/g, " ")} Report (${month} ${year})`;
-
-  generateAllPDF(sheetName, titleText);
-}
-
-/* --------------------- MONTHLY EXPORT --------------------- */
-function generateMonthlyPDF(type = "Join") {
-  const now = new Date();
-  const month = now.toLocaleString('en-US', { month: 'long' });
-  const year = now.getFullYear();
-  
-  // ✅ Dynamically build the sheet name
-  const sheetName = `Vessel_${type}_Report_${month}_${year}`;
-  const titleText = `Vessel ${type} Report — ${month} ${year}`;
-  
-  generateAllPDF(sheetName, titleText);
+  doc.save(`PTSC_THRI_${type}_Crew_All_Months.pdf`);
 }
 
 /* --------------------- STICKY NOTE --------------------- */

@@ -5,7 +5,7 @@
    - Make sure GAS_URL points to your deployed Apps Script web app
 ============================================================= */
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyHJOMWdg01HTWdV1DoMajJV4oFja2YirfG1K56hnkQskFB9YSzfMGvahax8q0BIf9b/exec"; // <-- replace if needed
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec"; // <-- replace if needed
 
 /* --------------------- Utilities --------------------- */
 function qs(id){ return document.getElementById(id); }

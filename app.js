@@ -14,28 +14,16 @@ function debugLog(...args){
   if(window.console && console.log) console.log(...args);
 }
 
-async function apiFetch(params) {
-  // Use your actual deployed Web App URL
-  const baseURL = GAS_URL; // <-- already defined at the top
-  const url = new URL(baseURL);
-
-  // Add all parameters to the URL
-  Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-
-  console.log("DEBUG → apiFetch URL:", url.toString());
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Network response was not ok');
-
-    const data = await response.json();
-    if (data.status === 'error') throw new Error(data.message);
-
-    return data;
-  } catch (err) {
-    console.error('apiFetch error:', err);
-    throw err;
-  }
+async function apiFetch(params){
+  // params is URLSearchParams or object convertible via toString()
+  const url = `${GAS_URL}?${params.toString()}`;
+  debugLog("DEBUG → apiFetch URL:", url);
+  const res = await fetch(url).catch(e => { throw new Error("Network fetch failed: " + e.message); });
+  if(!res.ok) throw new Error("Network error: " + res.status);
+  const j = await res.json().catch(e => { throw new Error("Invalid JSON response"); });
+  if(j.status && j.status !== "success") throw new Error(j.message || "API error");
+  // Some backends return {status:'success', data: ...}
+  return j.data === undefined ? j : j.data;
 }
 
 function escapeHtml(unsafe){
@@ -56,30 +44,41 @@ function makeId(name, prefix = "edit-"){
 }
 
 /* --------------------- LOGIN --------------------- */
-async function loginUser() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+async function loginUser(){
+  const u = qs("login-username")?.value?.trim() || "";
+  const p = qs("login-password")?.value?.trim() || "";
+  const err = qs("login-error");
+  if(err) err.innerText = "";
 
-  try {
-    const data = await apiFetch({
-      sheet: "Users",       // <-- must match your sheet name for user credentials
-      action: "login",      // <-- required
-      username: username,
-      password: password
-    });
+  if(!u || !p){ if(err) err.innerText = "Enter username and password"; return; }
 
-    if(data.status === "success") {
-      console.log("Login success:", data.user);
-      // TODO: proceed to dashboard
-    } else {
-      console.error("Login failed:", data.message);
-      alert("Login failed: " + data.message);
-    }
-  } catch (err) {
-    console.error("Login failed:", err);
-    alert("Login failed: " + err.message);
+  try{
+    const users = await apiFetch(new URLSearchParams({ sheet: "Users", action: "get" }));
+    const match = (users || []).find(x => String(x.Username || "").trim().toLowerCase() === u.toLowerCase() &&
+                                           String(x.Password || "").trim() === p);
+    if(!match){ if(err) err.innerText = "Invalid username or password"; return; }
+
+    sessionStorage.setItem("loggedInUser", match.Username);
+    sessionStorage.setItem("userRole", match.Role || "");
+    qs("login-overlay") && (qs("login-overlay").style.display = "none");
+    showTab("dashboard");
+    await initReload();
+  }catch(e){
+    debugLog("loginUser error:", e);
+    if(err) err.innerText = "Login failed: " + e.message;
   }
 }
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  // Hide login overlay if already logged in
+  if(sessionStorage.getItem("loggedInUser")){
+    qs("login-overlay") && (qs("login-overlay").style.display = "none");
+    showTab("dashboard");
+    initReload();
+  } else {
+    qs("login-overlay") && (qs("login-overlay").style.display = "flex");
+  }
+});
 
 /* --------------------- TAB NAV --------------------- */
 function showTab(id){

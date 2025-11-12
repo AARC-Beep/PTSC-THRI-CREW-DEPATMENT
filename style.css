@@ -220,30 +220,3 @@ table td button {
         padding: 15px;
     }
 }
-/* Dashboard Titles Bold & Yellow */
-.dashboard-title {
-    font-weight: bold;
-    color: yellow;
-    margin-bottom: 10px;
-}
-
-/* Table Header Bold & Yellow */
-.table thead th {
-    font-weight: bold;
-    color: yellow;
-}
-
-/* Optional: Make button look nicer */
-button {
-    margin-bottom: 10px;
-    padding: 5px 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #0056b3;
-}

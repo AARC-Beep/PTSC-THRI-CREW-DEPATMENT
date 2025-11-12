@@ -14,16 +14,20 @@ function debugLog(...args){
   if(window.console && console.log) console.log(...args);
 }
 
-async function apiFetch(params){
-  // params is URLSearchParams or object convertible via toString()
-  const url = `${GAS_URL}?${params.toString()}`;
-  debugLog("DEBUG → apiFetch URL:", url);
-  const res = await fetch(url).catch(e => { throw new Error("Network fetch failed: " + e.message); });
-  if(!res.ok) throw new Error("Network error: " + res.status);
-  const j = await res.json().catch(e => { throw new Error("Invalid JSON response"); });
-  if(j.status && j.status !== "success") throw new Error(j.message || "API error");
-  // Some backends return {status:'success', data: ...}
-  return j.data === undefined ? j : j.data;
+async function apiFetch(params) {
+  const baseURL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+  const url = new URL(baseURL);
+  Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data.status === 'error') throw new Error(data.message);
+    return data;
+  } catch (err) {
+    console.error('apiFetch error:', err);
+    throw err;
+  }
 }
 
 function escapeHtml(unsafe){

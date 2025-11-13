@@ -3,37 +3,147 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PTSC / THRI Crew Dashboard</title>
+<title>PTSC/THRI Crew Dashboard</title>
+
+<!-- Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<!-- PDF Libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-<style>
-/* Login Overlay */
-#login-overlay {
-  position: fixed;
-  top:0; left:0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-.login-box {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 300px;
-}
-</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+<!-- External CSS -->
+<link rel="stylesheet" href="style.css">
+
 </head>
 <body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h5 class="text-center mb-4">PTSC/THRI Crew Department</h5>
+
+  <a href="#" data-tab="dashboard">Dashboard</a>
+  <a href="#" data-tab="crew-join">Crew Joining</a>
+  <a href="#" data-tab="crew-arrivals">Crew Arrivals</a>
+  <a href="#" data-tab="daily-updates">Daily Updates</a>
+  <a href="#" data-tab="memo">Memo</a>
+  <a href="#" data-tab="training">Training</a>
+  <a href="#" data-tab="pni">P&I / Events</a>
+  <a href="#" data-tab="chat">Chatboard</a>
+  <a href="#" data-tab="help">Help / User Manual</a>
+
+  <hr style="border-color:#003366;">
+
+  <a href="https://www.flightaware.com" target="_blank">FlightAware</a>
+  <a href="https://www.msn.com/en-ph/news" target="_blank">MSN News PH</a>
+  <a href="https://zoom.earth" target="_blank">Zoom Earth</a>
+  <a href="https://marina.gov.ph" target="_blank">MARINA</a>
+  <a href="https://dmw.gov.ph" target="_blank">DMW</a>
+  <a href="https://owwa.gov.ph" target="_blank">OWWA</a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="tab-window active">
+    <h3>Dashboard Overview</h3>
+    <div class="row">
+      <div class="col-md-4"><div class="card dash-card"><h5>Crew Joining</h5><div id="dash-join"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card"><h5>Crew Arrivals</h5><div id="dash-arrivals"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card"><h5>Daily Updates</h5><div id="dash-updates"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card"><h5>Memo</h5><div id="dash-memo"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card"><h5>Training</h5><div id="dash-training"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card"><h5>P&I Events</h5><div id="dash-pni"></div></div></div>
+     </div>
+  </div>
+
+  <!-- CREW JOINING -->
+  <div id="crew-join" class="tab-window">
+    <h3>Crew Joining</h3>
+    <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('join')">Add New</button>
+    <div id="join-form" class="form-box" style="display:none;"></div>
+    <div id="crew-join-data" class="mt-3"></div>
+    <button type="button" class="btn btn-secondary mt-2" onclick="generateMonthlyPDF('Vessel_Join')">Generate Monthly PDF</button>
+  </div>
+
+  <!-- CREW ARRIVALS -->
+  <div id="crew-arrivals" class="tab-window">
+    <h3>Crew Arrivals</h3>
+    <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('arrivals')">Add New</button>
+    <div id="arrival-form" class="form-box" style="display:none;"></div>
+    <div id="crew-arrivals-data" class="mt-3"></div>
+    <button type="button" class="btn btn-secondary mt-2" onclick="generateMonthlyPDF('Arrivals')">Generate Monthly PDF</button>
+  </div>
+
+  <!-- DAILY UPDATES -->
+  <div id="daily-updates" class="tab-window">
+    <h3>Daily Updates</h3>
+    <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('updates')">Add New</button>
+    <div id="update-form" class="form-box" style="display:none;"></div>
+    <div id="daily-updates-data" class="mt-3"></div>
+  </div>
+
+  <!-- MEMO -->
+  <div id="memo" class="tab-window">
+    <h3>Memo</h3>
+    <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('memo')">Add New</button>
+    <div id="memo-form" class="form-box" style="display:none;"></div>
+    <div id="memo-data" class="mt-3"></div>
+  </div>
+
+  <!-- TRAINING -->
+  <div id="training" class="tab-window">
+    <h3>Training</h3>
+    <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('training')">Add New</button>
+    <div id="training-form" class="form-box" style="display:none;"></div>
+    <div id="training-data" class="mt-3"></div>
+  </div>
+
+  <!-- PNI -->
+  <div id="pni" class="tab-window">
+    <h3>P&I / Events</h3>
+    <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('pni')">Add New</button>
+    <div id="pni-form" class="form-box" style="display:none;"></div>
+    <div id="pni-data" class="mt-3"></div>
+  </div>
+
+  <!-- CHATBOARD -->
+  <div id="chat" class="tab-window">
+    <h3>Chatboard</h3>
+    <div id="chatboard"></div>
+    <input type="text" id="chat-input" placeholder="Type message..." class="form-control mt-2">
+    <button type="button" class="btn btn-primary mt-1" onclick="sendMessage()">Send</button>
+  </div>
+
+  <!-- HELP / USER MANUAL -->
+  <div id="help" class="tab-window">
+    <h3>Help / User Manual</h3>
+    <p>This dashboard allows PTSC/THRI crew management. Use the sidebar to navigate:</p>
+    <ul>
+      <li><b>Dashboard:</b> Quick overview of all sections</li>
+      <li><b>Crew Joining & Arrivals:</b> Add, edit, delete crew data. Monthly PDF includes archived entries</li>
+      <li><b>Daily Updates & Memo:</b> Add and edit notes</li>
+      <li><b>Training & P&I:</b> Admin only access</li>
+      <li><b>Chatboard:</b> Communicate in real-time</li>
+      <li><b>Sticky Note:</b> Personal notes (saved locally)</li>
+      <li><b>PDF:</b> Single-item or monthly reports available</li>
+    </ul>
+  </div>
+
+  <!-- STICKY NOTE -->
+  <div id="sticky-note">
+    <h5>Sticky Note (Private)</h5>
+    <textarea id="sticky-text"></textarea>
+  </div>
+
+</div> <!-- END MAIN CONTENT -->
 
 <!-- LOGIN OVERLAY -->
 <div id="login-overlay">
   <div class="login-box">
-    <h4 class="mb-3">PTSC/THRI Login</h4>
+    <h4>PTSC/THRI Login</h4>
     <input type="text" id="login-username" class="form-control mb-2" placeholder="Username">
     <input type="password" id="login-password" class="form-control mb-2" placeholder="Password">
     <button type="button" class="btn btn-primary w-100" onclick="loginUser()">Login</button>
@@ -41,113 +151,6 @@
   </div>
 </div>
 
-<!-- DASHBOARD SUMMARY -->
-<div class="container mt-4">
-  <div class="row">
-    <div class="col"><h5>Vessel Join: <span id="dash-vesseljoin"></span></h5></div>
-    <div class="col"><h5>Arrivals: <span id="dash-arrivals"></span></h5></div>
-    <div class="col"><h5>Updates: <span id="dash-updates"></span></h5></div>
-    <div class="col"><h5>Memo: <span id="dash-memo"></span></h5></div>
-    <div class="col"><h5>Training: <span id="dash-training"></span></h5></div>
-    <div class="col"><h5>P&I: <span id="dash-pni"></span></h5></div>
-  </div>
-</div>
-
-<!-- TABLE CONTAINERS -->
-<div class="container mt-4">
-  <h5>Vessel Join</h5>
-  <div id="crew-join-data"></div>
-  
-  <h5>Arrivals</h5>
-  <div id="crew-arrivals-data"></div>
-
-  <h5>Updates</h5>
-  <div id="daily-updates-data"></div>
-
-  <h5>Memo</h5>
-  <div id="memo-data"></div>
-
-  <h5>Training</h5>
-  <div id="training-data"></div>
-
-  <h5>P&I</h5>
-  <div id="pni-data"></div>
-
-  <h5>Chatboard</h5>
-  <div id="chatboard"></div>
-  <input type="text" id="chat-input" class="form-control my-2" placeholder="Type a message">
-  <button class="btn btn-primary mb-4" onclick="sendMessage()">Send</button>
-</div>
-
-<!-- APP.JS -->
 <script src="app.js"></script>
-
-<!-- PDF GENERATOR -->
-<script>
-function getJsPdf() {
-  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
-  if (window.jsPDF) return window.jsPDF;
-  return null;
-}
-
-function getMonthYear(dateStr) {
-  const d = new Date(dateStr);
-  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-}
-
-async function generateMonthlyGroupedPDF(type = "Join") {
-  const sheetMap = { "Join": "Vessel_Join", "Arrival": "Arrivals" };
-  const sheetName = sheetMap[type];
-  if (!sheetName) { alert("Unknown PDF type: " + type); return; }
-
-  const live = await apiFetch(sheetName, "get").catch(()=>[]);
-  const archived = await apiFetch(`Archive_${sheetName}`, "get").catch(()=>[]);
-  const all = [...(live||[]), ...(archived||[])];
-
-  if (!all.length) { 
-    alert("No records to export for " + sheetName); 
-    return; 
-  }
-
-  const jsPDFCtor = getJsPdf();
-  if (!jsPDFCtor) { alert("jsPDF not loaded"); return; }
-  const doc = new jsPDFCtor('p','pt','a4');
-
-  doc.setFontSize(14);
-  doc.text(`PTSC / THRI — ${type} Crew Report`, 40, 40);
-
-  const monthGroups = {};
-  all.forEach(r => {
-    const month = getMonthYear(r["Date"]);
-    if (!monthGroups[month]) monthGroups[month] = [];
-    monthGroups[month].push(r);
-  });
-
-  let currentY = 60;
-  const headers = Object.keys(all[0]);
-
-  if (doc.autoTable) {
-    for (const [month, rows] of Object.entries(monthGroups)) {
-      doc.setFontSize(12);
-      doc.text(month, 40, currentY);
-      currentY += 10;
-
-      doc.autoTable({
-        startY: currentY,
-        head: [headers],
-        body: rows.map(r => headers.map(h => r[h]||"")),
-        styles: { fontSize: 8, cellPadding: 3 },
-        headStyles: { fillColor: [0,57,107], textColor: 255 }
-      });
-
-      currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : currentY + 100;
-    }
-  }
-
-  const safeTitle = `PTSC_THRI_${type}_Crew_All_Months.pdf`;
-  doc.save(safeTitle);
-}
-</script>
-
 </body>
 </html>

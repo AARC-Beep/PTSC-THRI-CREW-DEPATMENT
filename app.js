@@ -536,11 +536,11 @@ function getJsPdf() {
   return null;
 }
 
-/* --------------------- HELPER: Format Month-Year --------------------- */
+/* --------------------- HELPER: Month-Year from Date --------------------- */
 function getMonthYear(dateStr) {
   const d = new Date(dateStr);
   if (isNaN(d)) return "Unknown Month";
-  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  return d.toLocaleString("en-US", { month: 'long', year: 'numeric' });
 }
 
 /* --------------------- GENERATE PDF --------------------- */
@@ -551,12 +551,15 @@ async function generateMonthlyGroupedPDF(type = "Join") {
 
   const base = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec";
 
-  // ✅ Fetch live + archive
+  // Fetch live + archive data
   const live = await apiFetch(`${base}?sheet=${sheetName}&action=get`).catch(()=>[]);
   const archived = await apiFetch(`${base}?sheet=Archive_${sheetName}&action=get`).catch(()=>[]);
   const all = [...(live||[]), ...(archived||[])];
 
-  if (!all.length) { alert("No records to export for " + sheetName); return; }
+  if (!all.length) { 
+    alert("No records to export for " + sheetName); 
+    return; 
+  }
 
   const jsPDFCtor = getJsPdf();
   if (!jsPDFCtor) { alert("jsPDF not loaded"); return; }
@@ -565,10 +568,10 @@ async function generateMonthlyGroupedPDF(type = "Join") {
   doc.setFontSize(14);
   doc.text(`PTSC / THRI — ${type} Crew Report`, 40, 40);
 
-  // Group records by month-year
+  // Group by month using the "Date" column explicitly
   const monthGroups = {};
   all.forEach(r => {
-    const month = getMonthYear(r.Date || r.date || r.Dates || r.Date_Of_Crew || "Unknown");
+    const month = getMonthYear(r["Date"]);
     if (!monthGroups[month]) monthGroups[month] = [];
     monthGroups[month].push(r);
   });

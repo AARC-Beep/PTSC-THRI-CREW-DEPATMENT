@@ -459,10 +459,14 @@ async function submitEdit(){
   try{
     const p = new URLSearchParams({ sheet: currentEdit.sheet, action: "update", UID: currentEdit.uid });
     for(const k in currentEdit.row){
-      if(k === "UID" || k === "Timestamp") continue;
-      const el = qs(makeId(k, "edit-"));
-      if(el) p.set(k, el.value);
-    }
+  if(k === "UID" || k === "Timestamp") continue;
+  const el = qs(makeId(k, "edit-"));
+  if(el){
+    let val = el.value;
+    if(Array.isArray(val)) val = val[0];       // safeguard
+    p.set(k, String(val || ""));
+  }
+}
     await apiFetch(p);
     alert("Updated successfully");
     closeModal();
@@ -610,9 +614,20 @@ function closeModal(){
 /* --------------------- Add row wrapper --------------------- */
 async function addRowData(sheet, fieldsObj){
   const params = new URLSearchParams({ sheet, action: "add" });
-  for(const k in fieldsObj) params.set(k, fieldsObj[k]);
+  
+  // Convert all values to string to prevent array issues
+  for(const k in fieldsObj){
+    let val = fieldsObj[k];
+    if(Array.isArray(val)) val = val[0];       // take first item if array
+    params.set(k, String(val || ""));          // ensure string
+  }
+
+  // Debug: check what is sent
+  console.log("Adding to GAS:", [...params.entries()]);
+  
   return await apiFetch(params);
 }
+
 
 /* --------------------- Helpers to map sheet -> container/columns --------------------- */
 function mapSheetToContainer(sheet){

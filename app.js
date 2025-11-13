@@ -543,8 +543,9 @@ function getMonthYear(dateStr) {
   return d.toLocaleString("en-US", { month: 'long', year: 'numeric' });
 }
 
-/* --------------------- GENERATE PDF --------------------- */
-async function generateMonthlyGroupedPDF(type = "Join") {
+/* --------------------- FULL PDF GENERATOR --------------------- */
+async function generateCrewPDF(type = "Join") {
+  // Map PDF type to exact sheet names
   const sheetMap = { "Join": "Vessel_join", "Arrival": "Arrivals" };
   const sheetName = sheetMap[type];
   if (!sheetName) { alert("Unknown PDF type: " + type); return; }
@@ -552,12 +553,12 @@ async function generateMonthlyGroupedPDF(type = "Join") {
   const base = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec";
 
   // Fetch live + archive data
-  const live = await apiFetch(`${base}?sheet=${sheetName}&action=get`).catch(()=>[]);
-  const archived = await apiFetch(`${base}?sheet=Archive_${sheetName}&action=get`).catch(()=>[]);
-  const all = [...(live||[]), ...(archived||[])];
+  const live = await apiFetch(`${base}?sheet=${sheetName}&action=get`).catch(() => []);
+  const archived = await apiFetch(`${base}?sheet=Archive_${sheetName}&action=get`).catch(() => []);
+  const all = [...(live || []), ...(archived || [])];
 
   if (!all.length) { 
-    alert("No records to export for " + sheetName); 
+    alert(`No records to export for ${sheetName}`); 
     return; 
   }
 
@@ -568,7 +569,7 @@ async function generateMonthlyGroupedPDF(type = "Join") {
   doc.setFontSize(14);
   doc.text(`PTSC / THRI — ${type} Crew Report`, 40, 40);
 
-  // Group by month using the "Date" column explicitly
+  // Group rows by month from "Date" column
   const monthGroups = {};
   all.forEach(r => {
     const month = getMonthYear(r["Date"]);
@@ -588,17 +589,25 @@ async function generateMonthlyGroupedPDF(type = "Join") {
       doc.autoTable({
         startY: currentY,
         head: [headers],
-        body: rows.map(r => headers.map(h => r[h]||"")),
+        body: rows.map(r => headers.map(h => r[h] || "")),
         styles: { fontSize: 8, cellPadding: 3 },
-        headStyles: { fillColor: [0,57,107], textColor: 255 }
+        headStyles: { fillColor: [0, 57, 107], textColor: 255 },
+        margin: { left: 40, right: 40 }
       });
 
       currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : currentY + 100;
     }
   }
 
-  doc.save(`PTSC_THRI_${type}_Crew_All_Months.pdf`);
+  // Generate safe filename
+  const safeTitle = `PTSC_THRI_${type}_Crew_All_Months`;
+  doc.save(`${safeTitle}.pdf`);
 }
+
+/* --------------------- HTML BUTTONS --------------------- */
+// <button onclick="generateCrewPDF('Join')">Joining Crew PDF</button>
+// <button onclick="generateCrewPDF('Arrival')">Arriving Crew PDF</button>
+
 
 /* --------------------- STICKY NOTE --------------------- */
 qs("sticky-text")?.addEventListener("input", e=>{

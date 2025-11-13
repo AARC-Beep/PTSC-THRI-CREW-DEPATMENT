@@ -1,4 +1,4 @@
-c/* ============================================================
+/* ============================================================
    PTSC / THRI Crew Dashboard - FULL (Option A)
    - Complete frontend JS compatible with your HTML & Code.gs
    - Actions used: get, getItem, add, update, delete, chat

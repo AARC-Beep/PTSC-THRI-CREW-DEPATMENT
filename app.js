@@ -1,183 +1,183 @@
-// ------------------------- Constants -------------------------
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec"; // replace with your Apps Script URL
+const API_URL = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec"; // replace with your Apps Script URL
 
-// ------------------------- Helpers -------------------------
+/* ---------------------- Helper ---------------------- */
 function qs(selector) {
   return document.querySelector(selector);
 }
 
-// Generic fetch for GET (load table, dashboard)
-async function apiFetch(url) {
-  console.log("DEBUG → apiFetch URL:", url);
-  const res = await fetch(url);
-  const json = await res.json();
-  if(json.status !== "success") throw new Error(json.message || "API fetch failed");
-  return json.data;
-}
-
-// Generic POST helper for adding/updating/deleting
-async function addRowData(sheet, data) {
-  const res = await fetch(`${SCRIPT_URL}?sheet=${sheet}&action=add`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
-
-  const json = await res.json();
-  if(json.status !== "success") throw new Error(json.message || "Add failed");
-  return json.data;
-}
-
-// ------------------------- Handle Add -------------------------
-async function handleAddVesselJoin(){
-  const fields = {
-    Vessel: qs("vj-vessel")?.value || "",
-    Principal: qs("vj-principal")?.value || "",
-    Port: qs("vj-port")?.value || "",
-    "No. of Crew": qs("vj-crew")?.value || "",
-    Rank: qs("vj-rank")?.value || "",
-    Date: qs("vj-date")?.value || "",
-    Flight: qs("vj-flight")?.value || ""
-  };
-  try{
-    await addRowData("Vessel_Join", fields);
-    alert("Added Vessel Joining");
-    toggleForm('join');
-    await loadTable("Vessel_Join","crew-join-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"]);
-    await loadDashboard();
-  } catch(e){
-    alert("Add failed: "+e.message);
-    console.error(e);
+async function apiFetch(sheet, action, params = {}) {
+  try {
+    const url = new URL(API_URL);
+    url.searchParams.set("sheet", sheet);
+    url.searchParams.set("action", action);
+    Object.keys(params).forEach(key => url.searchParams.set(key, params[key]));
+    
+    console.log("DEBUG → apiFetch URL:", url.toString());
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status === "success") return data.data;
+    else throw new Error(data.message);
+  } catch (err) {
+    console.error("apiFetch Error:", err);
+    throw err;
   }
 }
 
-async function handleAddArrivals(){
-  const fields = {
-    Vessel: qs("av-vessel")?.value || "",
-    Principal: qs("av-principal")?.value || "",
-    Port: qs("av-port")?.value || "",
-    "No. of Crew": qs("av-crew")?.value || "",
-    Rank: qs("av-rank")?.value || "",
-    Date: qs("av-date")?.value || "",
-    Flight: qs("av-flight")?.value || ""
-  };
-  try{
-    await addRowData("Arrivals", fields);
-    alert("Added Arrival");
-    toggleForm('arrivals');
-    await loadTable("Arrivals","crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"]);
-    await loadDashboard();
-  } catch(e){
-    alert("Add failed: "+e.message);
-    console.error(e);
+/* ---------------------- LOGIN ---------------------- */
+async function loginUser() {
+  const username = qs("#login-username").value.trim();
+  const password = qs("#login-password").value.trim();
+  const errorBox = qs("#login-error");
+  errorBox.innerText = "";
+
+  if (!username || !password) {
+    errorBox.innerText = "Enter username and password";
+    return;
+  }
+
+  try {
+    const users = await apiFetch("Users", "get");
+    const user = users.find(u => u.Username === username && u.Password === password);
+
+    if (user) {
+      qs("#login-overlay").style.display = "none";
+      await loadDashboard();
+    } else {
+      errorBox.innerText = "Invalid username or password";
+    }
+  } catch (err) {
+    errorBox.innerText = "Login failed, check console";
   }
 }
 
-async function handleAddUpdate(){
-  const fields = {
-    Title: qs("up-title")?.value || "",
-    Details: qs("up-details")?.value || "",
-    Date: qs("up-date")?.value || ""
-  };
-  try{
-    await addRowData("Updates", fields);
-    alert("Added Update");
-    toggleForm('updates');
-    await loadTable("Updates","daily-updates-data", ["Timestamp","Title","Details","Date","UID"]);
-    await loadDashboard();
-  } catch(e){
-    alert("Add failed: "+e.message);
-    console.error(e);
-  }
+/* ---------------------- ADD ROW ---------------------- */
+async function addRowData(sheet, fields) {
+  const result = await apiFetch(sheet, "add", fields);
+  return result;
 }
 
-async function handleAddMemo(){
-  const fields = {
-    Title: qs("memo-title")?.value || "",
-    Details: qs("memo-details")?.value || "",
-    Date: qs("memo-date")?.value || ""
-  };
-  try{
-    await addRowData("Memo", fields);
-    alert("Added Memo");
-    toggleForm('memo');
-    await loadTable("Memo","memo-data", ["Timestamp","Title","Details","Date","UID"]);
-    await loadDashboard();
-  } catch(e){
-    alert("Add failed: "+e.message);
-    console.error(e);
-  }
+/* ---------------------- UPDATE ROW ---------------------- */
+async function updateRowData(sheet, uid, fields) {
+  const result = await apiFetch(sheet, "update", { UID: uid, ...fields });
+  return result;
 }
 
-async function handleAddTraining(){
-  const fields = {
-    Subject: qs("tr-subject")?.value || "",
-    Details: qs("tr-details")?.value || "",
-    Date: qs("tr-date")?.value || ""
-  };
-  try{
-    await addRowData("Training", fields);
-    alert("Training added");
-    toggleForm('training');
-    await loadTable("Training","training-data", ["Timestamp","Subject","Details","Date","UID"]);
-    await loadDashboard();
-  } catch(e){
-    alert("Add failed: "+e.message);
-    console.error(e);
-  }
+/* ---------------------- DELETE ROW ---------------------- */
+async function deleteRowData(sheet, uid) {
+  const result = await apiFetch(sheet, "delete", { UID: uid });
+  return result;
 }
 
-async function handleAddPni(){
-  const fields = {
-    Subject: qs("pn-subject")?.value || "",
-    Details: qs("pn-details")?.value || "",
-    Date: qs("pn-date")?.value || ""
-  };
-  try{
-    await addRowData("Pni", fields);
-    alert("P&I Event added");
-    toggleForm('pni');
-    await loadTable("Pni","pni-data", ["Timestamp","Subject","Details","Date","UID"]);
-    await loadDashboard();
-  } catch(e){
-    alert("Add failed: "+e.message);
-    console.error(e);
-  }
-}
-
-// ------------------------- Load Table Example -------------------------
-async function loadTable(sheet, containerId, columns){
-  const data = await apiFetch(`${SCRIPT_URL}?sheet=${sheet}&action=get`);
+/* ---------------------- LOAD TABLE ---------------------- */
+async function loadTable(sheet, containerId, headers) {
   const container = qs(`#${containerId}`);
-  if(!container) return;
+  container.innerHTML = "";
+  try {
+    const rows = await apiFetch(sheet, "get");
+    if (!rows.length) {
+      container.innerHTML = "<i>No records found</i>";
+      return;
+    }
 
-  let html = "<table class='table table-sm table-bordered'><thead><tr>";
-  columns.forEach(c=> html += `<th>${c}</th>`);
-  html += "</tr></thead><tbody>";
-
-  data.forEach(row=>{
-    html += "<tr>";
-    columns.forEach(c=>{
-      let val = row[c] ?? "";
-      if(val instanceof Object && val.hasOwnProperty("toISOString")) val = new Date(val).toLocaleString();
-      html += `<td>${val}</td>`;
+    const table = document.createElement("table");
+    table.className = "table table-bordered table-striped";
+    
+    // header
+    const thead = document.createElement("thead");
+    const trh = document.createElement("tr");
+    headers.forEach(h => {
+      const th = document.createElement("th");
+      th.innerText = h;
+      trh.appendChild(th);
     });
-    html += "</tr>";
-  });
+    thead.appendChild(trh);
+    table.appendChild(thead);
 
-  html += "</tbody></table>";
-  container.innerHTML = html;
+    // body
+    const tbody = document.createElement("tbody");
+    rows.forEach(r => {
+      const tr = document.createElement("tr");
+      headers.forEach(h => {
+        const td = document.createElement("td");
+        let val = r[h] || "";
+        if (val && val.toString().includes("T") && !isNaN(Date.parse(val))) {
+          val = new Date(val).toLocaleString();
+        }
+        td.innerText = val;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    container.appendChild(table);
+  } catch (err) {
+    container.innerHTML = `<i>Error loading data: ${err.message}</i>`;
+  }
 }
 
-// ------------------------- Dashboard Loader -------------------------
-async function loadDashboard(){
-  // Example: You can load counts for each section
-  // Similar to loadTable but with summary info
-  console.log("Dashboard loaded");
+/* ---------------------- DASHBOARD SUMMARY ---------------------- */
+async function loadDashboard() {
+  const sheets = ["Vessel_Join","Arrivals","Updates","Memo","Training","Pni"];
+  for (let sheet of sheets) {
+    const data = await apiFetch(sheet, "get");
+    const containerId = `dash-${sheet.toLowerCase().replace("_","")}`;
+    const container = qs(`#${containerId}`);
+    container.innerText = data.length;
+  }
 }
 
-// ------------------------- Toggle Forms -------------------------
-function toggleForm(formId){
-  const form = qs(`${formId}-form`);
-  if(form) form.style.display = form.style.display === "none" ? "block" : "none";
+/* ---------------------- CHATBOARD ---------------------- */
+async function sendMessage() {
+  const input = qs("#chat-input");
+  const msg = input.value.trim();
+  if (!msg) return;
+  try {
+    await addRowData("Chatboard", { Message: msg, Timestamp: new Date() });
+    input.value = "";
+    await loadTable("Chatboard", "chatboard", ["Timestamp","Message","UID"]);
+  } catch (err) {
+    alert("Chat send failed: " + err.message);
+  }
 }
+
+/* ---------------------- FORM TOGGLE ---------------------- */
+function toggleForm(id) {
+  const form = qs(`#${id}-form`);
+  if (form.style.display === "none") form.style.display = "block";
+  else form.style.display = "none";
+}
+
+/* ---------------------- HANDLE ADD NEW ---------------------- */
+async function handleAdd(sheet, fields, tableContainer, headers, formId) {
+  try {
+    await addRowData(sheet, fields);
+    alert("Added successfully!");
+    toggleForm(formId);
+    await loadTable(sheet, tableContainer, headers);
+    await loadDashboard();
+  } catch (err) {
+    alert("Add failed: " + err.message);
+    console.error(err);
+  }
+}
+
+/* ---------------------- INIT ---------------------- */
+window.addEventListener("DOMContentLoaded", async () => {
+  // Load dashboard counts
+  await loadDashboard();
+
+  // Load all tables
+  const tableMappings = [
+    { sheet: "Vessel_Join", container: "crew-join-data", headers: ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"] },
+    { sheet: "Arrivals", container: "crew-arrivals-data", headers: ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"] },
+    { sheet: "Updates", container: "daily-updates-data", headers: ["Timestamp","Title","Details","Date","UID"] },
+    { sheet: "Memo", container: "memo-data", headers: ["Timestamp","Title","Details","Date","UID"] },
+    { sheet: "Training", container: "training-data", headers: ["Timestamp","Subject","Details","Date","UID"] },
+    { sheet: "Pni", container: "pni-data", headers: ["Timestamp","Subject","Details","Date","UID"] },
+    { sheet: "Chatboard", container: "chatboard", headers: ["Timestamp","Message","UID"] }
+  ];
+
+  for (let t of tableMappings) {
+    await loadTable(t.sheet, t.container, t.headers);
+  }
+});

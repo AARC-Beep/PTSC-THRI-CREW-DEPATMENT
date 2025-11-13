@@ -152,5 +152,73 @@
 </div>
 
 <script src="app.js"></script>
+  <script>
+function getJsPdf() {
+  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  if (window.jsPDF) return window.jsPDF;
+  return null;
+}
+
+function getMonthYear(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
+
+async function generateMonthlyGroupedPDF(type = "Join") {
+  const sheetMap = { "Join": "Vessel_join", "Arrival": "Arrivals" };
+  const sheetName = sheetMap[type];
+  if (!sheetName) { alert("Unknown PDF type: " + type); return; }
+
+  const base = "https://script.google.com/macros/s/AKfycbxCT2lVKm184HanG81VCqiScaK_-zgHd7zNhd1iIsNLX_L76VI4G5mWSsyxBU9OiztF/exec";
+
+  const live = await apiFetch(`${base}?sheet=${sheetName}&action=get`).catch(()=>[]);
+  const archived = await apiFetch(`${base}?sheet=Archive_${sheetName}&action=get`).catch(()=>[]);
+  const all = [...(live||[]), ...(archived||[])];
+
+  if (!all.length) { 
+    alert("No records to export for " + sheetName); 
+    return; 
+  }
+
+  const jsPDFCtor = getJsPdf();
+  if (!jsPDFCtor) { alert("jsPDF not loaded"); return; }
+  const doc = new jsPDFCtor('p','pt','a4');
+
+  doc.setFontSize(14);
+  doc.text(`PTSC / THRI — ${type} Crew Report`, 40, 40);
+
+  const monthGroups = {};
+  all.forEach(r => {
+    const month = getMonthYear(r["Date"]);
+    if (!monthGroups[month]) monthGroups[month] = [];
+    monthGroups[month].push(r);
+  });
+
+  let currentY = 60;
+  const headers = Object.keys(all[0]);
+
+  if (doc.autoTable) {
+    for (const [month, rows] of Object.entries(monthGroups)) {
+      doc.setFontSize(12);
+      doc.text(month, 40, currentY);
+      currentY += 10;
+
+      doc.autoTable({
+        startY: currentY,
+        head: [headers],
+        body: rows.map(r => headers.map(h => r[h]||"")),
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [0,57,107], textColor: 255 }
+      });
+
+      currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : currentY + 100;
+    }
+  }
+
+  const safeTitle = `PTSC_THRI_${type}_Crew_All_Months.pdf`;
+  doc.save(safeTitle);
+}
+</script>
+
 </body>
 </html>

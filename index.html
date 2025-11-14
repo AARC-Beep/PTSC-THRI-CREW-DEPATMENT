@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PTSC/THRI Crew Dashboard</title>
 
-<!-- Bootstrap -->
+<!-- Bootstrap & FontAwesome -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
@@ -13,7 +13,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
-<!-- External CSS -->
+<!-- Custom CSS -->
 <link rel="stylesheet" href="style.css">
 
 </head>
@@ -22,7 +22,6 @@
 <!-- SIDEBAR -->
 <div class="sidebar">
   <h5 class="text-center mb-4">PTSC/THRI Crew Department</h5>
-
   <a href="#" data-tab="dashboard">Dashboard</a>
   <a href="#" data-tab="crew-join">Crew Joining</a>
   <a href="#" data-tab="crew-arrivals">Crew Arrivals</a>
@@ -47,38 +46,36 @@
 <div class="main-content">
 
   <!-- DASHBOARD -->
-  <div id="dashboard" class="tab-window active">
+  <div id="dashboard" class="tab-window">
     <h3>Dashboard Overview</h3>
     <div class="row">
-      <div class="col-md-4"><div class="card dash-card"><h5>Crew Joining</h5><div id="dash-join"></div></div></div>
-      <div class="col-md-4"><div class="card dash-card"><h5>Crew Arrivals</h5><div id="dash-arrivals"></div></div></div>
-      <div class="col-md-4"><div class="card dash-card"><h5>Daily Updates</h5><div id="dash-updates"></div></div></div>
-      <div class="col-md-4"><div class="card dash-card"><h5>Memo</h5><div id="dash-memo"></div></div></div>
-      <div class="col-md-4"><div class="card dash-card"><h5>Training</h5><div id="dash-training"></div></div></div>
-      <div class="col-md-4"><div class="card dash-card"><h5>P&I Events</h5><div id="dash-pni"></div></div></div>
-     </div>
+      <div class="col-md-4"><div class="card dash-card p-2"><h5>Crew Joining</h5><div id="dash-join"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card p-2"><h5>Crew Arrivals</h5><div id="dash-arrivals"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card p-2"><h5>Daily Updates</h5><div id="dash-updates"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card p-2"><h5>Memo</h5><div id="dash-memo"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card p-2"><h5>Training</h5><div id="dash-training"></div></div></div>
+      <div class="col-md-4"><div class="card dash-card p-2"><h5>P&I Events</h5><div id="dash-pni"></div></div></div>
+    </div>
   </div>
 
   <!-- CREW JOINING -->
-  <div id="crew-join" class="tab-window">
+  <div id="crew-join" class="tab-window" style="display:none;">
     <h3>Crew Joining</h3>
     <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('join')">Add New</button>
     <div id="join-form" class="form-box" style="display:none;"></div>
     <div id="crew-join-data" class="mt-3"></div>
-    <button type="button" class="btn btn-secondary mt-2" onclick="generateMonthlyPDF('Vessel_Join')">Generate Monthly PDF</button>
   </div>
 
   <!-- CREW ARRIVALS -->
-  <div id="crew-arrivals" class="tab-window">
+  <div id="crew-arrivals" class="tab-window" style="display:none;">
     <h3>Crew Arrivals</h3>
     <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('arrivals')">Add New</button>
     <div id="arrival-form" class="form-box" style="display:none;"></div>
     <div id="crew-arrivals-data" class="mt-3"></div>
-    <button type="button" class="btn btn-secondary mt-2" onclick="generateMonthlyPDF('Arrivals')">Generate Monthly PDF</button>
   </div>
 
   <!-- DAILY UPDATES -->
-  <div id="daily-updates" class="tab-window">
+  <div id="daily-updates" class="tab-window" style="display:none;">
     <h3>Daily Updates</h3>
     <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('updates')">Add New</button>
     <div id="update-form" class="form-box" style="display:none;"></div>
@@ -86,7 +83,7 @@
   </div>
 
   <!-- MEMO -->
-  <div id="memo" class="tab-window">
+  <div id="memo" class="tab-window" style="display:none;">
     <h3>Memo</h3>
     <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('memo')">Add New</button>
     <div id="memo-form" class="form-box" style="display:none;"></div>
@@ -94,7 +91,7 @@
   </div>
 
   <!-- TRAINING -->
-  <div id="training" class="tab-window">
+  <div id="training" class="tab-window" style="display:none;">
     <h3>Training</h3>
     <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('training')">Add New</button>
     <div id="training-form" class="form-box" style="display:none;"></div>
@@ -102,7 +99,7 @@
   </div>
 
   <!-- PNI -->
-  <div id="pni" class="tab-window">
+  <div id="pni" class="tab-window" style="display:none;">
     <h3>P&I / Events</h3>
     <button type="button" class="btn btn-primary mb-3" onclick="toggleForm('pni')">Add New</button>
     <div id="pni-form" class="form-box" style="display:none;"></div>
@@ -110,26 +107,17 @@
   </div>
 
   <!-- CHATBOARD -->
-  <div id="chat" class="tab-window">
+  <div id="chat" class="tab-window" style="display:none;">
     <h3>Chatboard</h3>
     <div id="chatboard"></div>
-    <input type="text" id="chat-input" placeholder="Type message..." class="form-control mt-2">
+    <input type="text" id="chat-input" class="form-control mt-2" placeholder="Type message...">
     <button type="button" class="btn btn-primary mt-1" onclick="sendMessage()">Send</button>
   </div>
 
-  <!-- HELP / USER MANUAL -->
-  <div id="help" class="tab-window">
+  <!-- HELP -->
+  <div id="help" class="tab-window" style="display:none;">
     <h3>Help / User Manual</h3>
-    <p>This dashboard allows PTSC/THRI crew management. Use the sidebar to navigate:</p>
-    <ul>
-      <li><b>Dashboard:</b> Quick overview of all sections</li>
-      <li><b>Crew Joining & Arrivals:</b> Add, edit, delete crew data. Monthly PDF includes archived entries</li>
-      <li><b>Daily Updates & Memo:</b> Add and edit notes</li>
-      <li><b>Training & P&I:</b> Admin only access</li>
-      <li><b>Chatboard:</b> Communicate in real-time</li>
-      <li><b>Sticky Note:</b> Personal notes (saved locally)</li>
-      <li><b>PDF:</b> Single-item or monthly reports available</li>
-    </ul>
+    <p>This dashboard allows PTSC/THRI crew management. Use the sidebar to navigate.</p>
   </div>
 
   <!-- STICKY NOTE -->
@@ -138,7 +126,7 @@
     <textarea id="sticky-text"></textarea>
   </div>
 
-</div> <!-- END MAIN CONTENT -->
+</div>
 
 <!-- LOGIN OVERLAY -->
 <div id="login-overlay">

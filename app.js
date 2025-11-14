@@ -1,15 +1,15 @@
 /* ============================================================
    PTSC / THRI Crew Dashboard - FULL (Updated)
-   - Dashboard Open buttons now load full tables like sidebar
-   - Maintains all forms, add/edit/delete, chat, PDF export, sticky notes
+   - Fully connected dashboard Open buttons
+   - Sidebar clicks and Open buttons now load tables dynamically
+   - Actions: get, getItem, add, update, delete, chat
 ============================================================= */
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwA2GmgDpwDZJuuquwRjucregz9PkmZn2N1ZYa6A_FstEEP3wt8Fu8gtavv-g6Endzb/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwA2GmgDpwDZJuuquwRjucregz9PkmZn2N1ZYa6A_FstEEP3wt8Fu8gtavv-g6Endzb/exec"; 
 
 /* --------------------- Utilities --------------------- */
 function qs(id){ return document.getElementById(id); }
-
-function debugLog(...args){ if(window.console && console.log) console.log(...args); }
+function debugLog(...args){ if(window.console) console.log(...args); }
 
 async function apiFetch(params){
   const url = `${GAS_URL}?${params.toString()}`;
@@ -48,8 +48,8 @@ async function loginUser(){
 
   try{
     const users = await apiFetch(new URLSearchParams({ sheet: "Users", action: "get" }));
-    const match = (users || []).find(x => String(x.Username || "").trim().toLowerCase() === u.toLowerCase() &&
-                                           String(x.Password || "").trim() === p);
+    const match = (users || []).find(x => String(x.Username||"").trim().toLowerCase() === u.toLowerCase() &&
+                                           String(x.Password||"").trim() === p);
     if(!match){ if(err) err.innerText = "Invalid username or password"; return; }
 
     sessionStorage.setItem("loggedInUser", match.Username);
@@ -73,21 +73,17 @@ document.addEventListener("DOMContentLoaded", ()=>{
   }
 });
 
-/* --------------------- TAB NAV --------------------- */
-function showTab(tabId) {
-  // Hide all tabs
+/* --------------------- TAB NAVIGATION --------------------- */
+function showTab(tabId){
   document.querySelectorAll('.tab-window').forEach(tab => tab.style.display = 'none');
-
-  // Show selected tab
   const tab = qs(tabId);
   if(tab) tab.style.display = 'block';
 
-  // Highlight sidebar
   document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
   const sidebarItem = document.querySelector(`[data-tab='${tabId}']`);
   if(sidebarItem) sidebarItem.classList.add('active');
 
-  // Load full table for tab
+  // Load data dynamically
   switch(tabId){
     case 'crew-joining': loadTable("Vessel_Join","crew-join-data", getColumnsForSheet("Vessel_Join")); break;
     case 'arrivals-tab': loadTable("Arrivals","crew-arrivals-data", getColumnsForSheet("Arrivals")); break;
@@ -98,15 +94,15 @@ function showTab(tabId) {
   }
 }
 
-/* --------------------- DASHBOARD PREVIEW --------------------- */
-async function loadDashboard() {
+/* --------------------- DASHBOARD --------------------- */
+async function loadDashboard(){
   const map = {
-    "Vessel_Join": "dash-join",
-    "Arrivals": "dash-arrivals",
-    "Updates": "dash-updates",
-    "Memo": "dash-memo",
-    "Training": "dash-training",
-    "Pni": "dash-pni"
+    "Vessel_Join":"dash-join",
+    "Arrivals":"dash-arrivals",
+    "Updates":"dash-updates",
+    "Memo":"dash-memo",
+    "Training":"dash-training",
+    "Pni":"dash-pni"
   };
 
   for(const sheet in map){
@@ -115,33 +111,70 @@ async function loadDashboard() {
     box.innerHTML = "Loading...";
 
     try{
-      const data = await apiFetch(new URLSearchParams({ sheet, action: "get" })).catch(() => []);
+      const data = await apiFetch(new URLSearchParams({ sheet, action:"get" })).catch(()=>[]);
       const count = (data || []).length;
 
       box.innerHTML = `
         <div class="d-flex justify-content-between align-items-center mb-2">
           <strong>${sheet.replace("_"," ")}</strong>
-          <button class="btn btn-sm btn-outline-primary" onclick="showTab('${mapSheetToContainer(sheet)}')">Open</button>
+          <button class="btn btn-sm btn-outline-primary" 
+            onclick="showTab('${mapSheetToTab(sheet)}'); loadTable('${sheet}','${mapSheetToDataContainer(sheet)}', getColumnsForSheet('${sheet}'))">
+            Open
+          </button>
         </div>
         <h2>${count}</h2>
         <button class="btn btn-sm btn-secondary mt-2" onclick="generateAllPDF('${sheet}')">Export PDF</button>
       `;
     }catch(err){
       box.innerHTML = "<small>Error loading</small>";
-      console.error("loadDashboard error", sheet, err);
+      debugLog("loadDashboard error", sheet, err);
     }
   }
 }
 
-/* --------------------- TABLES --------------------- */
+// Helpers to map sheet → tab / table container
+function mapSheetToTab(sheet){
+  return {
+    "Vessel_Join":"crew-joining",
+    "Arrivals":"arrivals-tab",
+    "Updates":"updates-tab",
+    "Memo":"memo-tab",
+    "Training":"training-tab",
+    "Pni":"pni-tab"
+  }[sheet] || "";
+}
+
+function mapSheetToDataContainer(sheet){
+  return {
+    "Vessel_Join":"crew-join-data",
+    "Arrivals":"crew-arrivals-data",
+    "Updates":"daily-updates-data",
+    "Memo":"memo-data",
+    "Training":"training-data",
+    "Pni":"pni-data"
+  }[sheet] || "";
+}
+
+function getColumnsForSheet(sheet){
+  return {
+    "Vessel_Join":["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"],
+    "Arrivals":["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"],
+    "Updates":["Timestamp","Title","Details","Date","UID"],
+    "Memo":["Timestamp","Title","Details","Date","UID"],
+    "Training":["Timestamp","Subject","Details","Date","UID"],
+    "Pni":["Timestamp","Subject","Details","Date","UID"]
+  }[sheet] || [];
+}
+
+/* --------------------- TABLE LOADER --------------------- */
 async function loadTable(sheet, containerId, columns){
   const div = qs(containerId);
-  if(!div){ console.warn("Missing container:", containerId); return; }
+  if(!div) return console.warn("Missing container:", containerId);
   div.innerHTML = "<div>Loading...</div>";
 
   try{
-    const data = await apiFetch(new URLSearchParams({ sheet, action: "get" })).catch(()=>[]);
-    if(!data || !data.length){ div.innerHTML = "<div><small>No records</small></div>"; return; }
+    const data = await apiFetch(new URLSearchParams({ sheet, action:"get" })).catch(()=>[]);
+    if(!data || !data.length){ div.innerHTML = "<small>No records</small>"; return; }
 
     const table = document.createElement("table");
     table.className = "table table-sm table-bordered";
@@ -157,57 +190,46 @@ async function loadTable(sheet, containerId, columns){
       columns.forEach(col=>{
         if(col==="UID" || col==="Timestamp") return;
         let val = row[col] || "";
-        if(["Vessel","Title","Subject"].includes(col)) val = `<b>${escapeHtml(String(val))}</b>`;
+        if(
+          (sheet==="Vessel_Join" && col==="Vessel") ||
+          (sheet==="Arrivals" && col==="Vessel") ||
+          (sheet==="Updates" && col==="Title") ||
+          (sheet==="Memo" && col==="Title") ||
+          (sheet==="Training" && col==="Subject") ||
+          (sheet==="Pni" && col==="Subject")
+        ) val = `<b>${escapeHtml(String(val))}</b>`;
         else val = escapeHtml(String(val));
         tr.innerHTML += `<td>${val}</td>`;
       });
+
       const uidSafe = row.UID || "";
       tr.innerHTML += `<td>
-        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEditModal('${sheet}','${uidSafe}')">Edit</button>
-        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRowConfirm('${sheet}','${uidSafe}')">Delete</button>
+        <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${sheet}','${uidSafe}')">Edit</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteRowConfirm('${sheet}','${uidSafe}')">Delete</button>
       </td>`;
+
       tbody.appendChild(tr);
     });
 
     table.appendChild(tbody);
     div.innerHTML = "";
     div.appendChild(table);
-
   }catch(err){
-    div.innerHTML = `<div class='text-danger'>Failed to load table</div>`;
-    debugLog("loadTable", sheet, err);
+    div.innerHTML = "<div class='text-danger'>Failed to load table</div>";
+    debugLog("loadTable error", sheet, err);
   }
 }
 
-/* --------------------- MAP SHEET → TAB --------------------- */
-function mapSheetToContainer(sheet){
-  return {
-    "Vessel_Join":"crew-joining",
-    "Arrivals":"arrivals-tab",
-    "Updates":"updates-tab",
-    "Memo":"memo-tab",
-    "Training":"training-tab",
-    "Pni":"pni-tab"
-  }[sheet] || null;
-}
-
-function getColumnsForSheet(sheet){
-  return {
-    "Vessel_Join":["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"],
-    "Arrivals":["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"],
-    "Updates":["Timestamp","Title","Details","Date","UID"],
-    "Memo":["Timestamp","Title","Details","Date","UID"],
-    "Training":["Timestamp","Subject","Details","Date","UID"],
-    "Pni":["Timestamp","Subject","Details","Date","UID"]
-  }[sheet] || [];
-}
+/* --------------------- Other functions (Add/Edit/Delete/PDF/Forms/Chat) --------------------- */
+// The rest of your existing add, edit, delete, generate PDF, chat, sticky note functions remain the same
+// You can copy them as-is from your previous app.js file
 
 /* --------------------- INITIALIZATION --------------------- */
 async function initReload(){
-  await loadDashboard();   // show dashboard cards
-  await loadAllData();     // preload all tables
+  await loadAllData();    // preload all tables
+  await loadDashboard();  // update dashboard cards
 }
 
-window.addEventListener("load", ()=>{ 
+window.addEventListener("load", ()=>{
   if(sessionStorage.getItem("loggedInUser")) initReload();
 });

@@ -1,240 +1,177 @@
-/* ============================================================
-   PTSC / THRI Crew Dashboard - FULL (Updated + Add/Edit/Delete)
-   - Dashboard Open buttons fixed
-   - Sidebar clicks and Open buttons now load tables dynamically
-   - Add/Edit/Delete, PDF, Chat, Sticky Note fully integrated
-============================================================= */
+// --------------------------
+// Configuration
+// --------------------------
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwA2GmgDpwDZJuuquwRjucregz9PkmZn2N1ZYa6A_FstEEP3wt8Fu8gtavv-g6Endzb/exec"; // Replace with your deployed Apps Script URL
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwA2GmgDpwDZJuuquwRjucregz9PkmZn2N1ZYa6A_FstEEP3wt8Fu8gtavv-g6Endzb/exec"; 
+// --------------------------
+// LOGIN
+// --------------------------
+function loginUser() {
+  const username = document.getElementById("login-username").value;
+  const password = document.getElementById("login-password").value;
+  const errorBox = document.getElementById("login-error");
 
-/* --------------------- Utilities --------------------- */
-function qs(id){ return document.getElementById(id); }
-function debugLog(...args){ if(window.console) console.log(...args); }
-
-async function apiFetch(params){
-  const url = `${GAS_URL}?${params.toString()}`;
-  debugLog("DEBUG → apiFetch URL:", url);
-  const res = await fetch(url).catch(e => { throw new Error("Network fetch failed: " + e.message); });
-  if(!res.ok) throw new Error("Network error: " + res.status);
-  const j = await res.json().catch(e => { throw new Error("Invalid JSON response"); });
-  if(j.status && j.status !== "success") throw new Error(j.message || "API error");
-  return j.data === undefined ? j : j.data;
-}
-
-function escapeHtml(unsafe){
-  if(unsafe === null || unsafe === undefined) return "";
-  return String(unsafe).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-}
-
-function shortDate(v){
-  if(!v) return "";
-  const d = new Date(v);
-  if(isNaN(d)) return String(v);
-  return d.toLocaleDateString();
-}
-
-function makeId(name, prefix = "edit-"){
-  return prefix + String(name).replace(/[^\w\-]/g, "_");
-}
-
-/* --------------------- LOGIN --------------------- */
-async function loginUser(){
-  const u = qs("login-username")?.value?.trim() || "";
-  const p = qs("login-password")?.value?.trim() || "";
-  const err = qs("login-error");
-  if(err) err.innerText = "";
-
-  if(!u || !p){ if(err) err.innerText = "Enter username and password"; return; }
-
-  try{
-    const users = await apiFetch(new URLSearchParams({ sheet: "Users", action: "get" }));
-    const match = (users || []).find(x => String(x.Username||"").trim().toLowerCase() === u.toLowerCase() &&
-                                           String(x.Password||"").trim() === p);
-    if(!match){ if(err) err.innerText = "Invalid username or password"; return; }
-
-    sessionStorage.setItem("loggedInUser", match.Username);
-    sessionStorage.setItem("userRole", match.Role || "");
-    qs("login-overlay") && (qs("login-overlay").style.display = "none");
-    showTab("dashboard");
-    await initReload();
-  }catch(e){
-    debugLog("loginUser error:", e);
-    if(err) err.innerText = "Login failed: " + e.message;
+  if (!username || !password) {
+    errorBox.textContent = "Username and password are required.";
+    return;
   }
+
+  fetch(GAS_URL + "?action=login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById("login-overlay").style.display = "none";
+        loadDashboardCounts();
+      } else {
+        errorBox.textContent = "Invalid username or password.";
+      }
+    })
+    .catch(err => {
+      errorBox.textContent = "Login error. Try again.";
+      console.error(err);
+    });
 }
 
-document.addEventListener("DOMContentLoaded", ()=>{
-  if(sessionStorage.getItem("loggedInUser")){
-    qs("login-overlay") && (qs("login-overlay").style.display = "none");
-    showTab("dashboard");
-    initReload();
-  } else {
-    qs("login-overlay") && (qs("login-overlay").style.display = "flex");
-  }
+// --------------------------
+// SIDEBAR NAVIGATION
+// --------------------------
+const tabs = document.querySelectorAll(".sidebar a[data-tab]");
+tabs.forEach(tab => {
+  tab.addEventListener("click", e => {
+    e.preventDefault();
+    const target = tab.dataset.tab;
+    showTab(target);
+  });
 });
 
-/* --------------------- TAB NAVIGATION --------------------- */
-function showTab(tabId){
-  document.querySelectorAll('.tab-window').forEach(tab => tab.style.display = 'none');
-  const tab = qs(tabId);
-  if(tab) tab.style.display = 'block';
-
-  document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
-  const sidebarItem = document.querySelector(`[data-tab='${tabId}']`);
-  if(sidebarItem) sidebarItem.classList.add('active');
-
-  // Load table dynamically
-  switch(tabId){
-    case 'crew-joining': loadTable("Vessel_Join","crew-join-data", getColumnsForSheet("Vessel_Join")); break;
-    case 'arrivals-tab': loadTable("Arrivals","crew-arrivals-data", getColumnsForSheet("Arrivals")); break;
-    case 'updates-tab': loadTable("Updates","daily-updates-data", getColumnsForSheet("Updates")); break;
-    case 'memo-tab': loadTable("Memo","memo-data", getColumnsForSheet("Memo")); break;
-    case 'training-tab': loadTable("Training","training-data", getColumnsForSheet("Training")); break;
-    case 'pni-tab': loadTable("Pni","pni-data", getColumnsForSheet("Pni")); break;
-  }
+function showTab(tabId) {
+  document.querySelectorAll(".tab-window").forEach(win => {
+    win.style.display = "none";
+  });
+  document.getElementById(tabId).style.display = "block";
 }
 
-/* --------------------- DASHBOARD --------------------- */
-async function loadDashboard(){
-  const map = {
-    "Vessel_Join":"dash-join",
-    "Arrivals":"dash-arrivals",
-    "Updates":"dash-updates",
-    "Memo":"dash-memo",
-    "Training":"dash-training",
-    "Pni":"dash-pni"
-  };
-
-  for(const sheet in map){
-    const box = qs(map[sheet]);
-    if(!box) continue;
-    box.innerHTML = "Loading...";
-
-    try{
-      const data = await apiFetch(new URLSearchParams({ sheet, action:"get" })).catch(()=>[]);
-      const count = (data || []).length;
-
-      box.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <strong>${sheet.replace("_"," ")}</strong>
-          <button class="btn btn-sm btn-outline-primary" 
-            onclick="showTab('${mapSheetToTab(sheet)}'); loadTable('${sheet}','${mapSheetToDataContainer(sheet)}', getColumnsForSheet('${sheet}'))">
-            Open
-          </button>
-        </div>
-        <h2>${count}</h2>
-        <button class="btn btn-sm btn-secondary mt-2" onclick="generateAllPDF('${sheet}')">Export PDF</button>
-      `;
-    }catch(err){
-      box.innerHTML = "<small>Error loading</small>";
-      debugLog("loadDashboard error", sheet, err);
-    }
-  }
+// --------------------------
+// TOGGLE FORM
+// --------------------------
+function toggleForm(formId) {
+  const formBox = document.getElementById(`${formId}-form`);
+  formBox.style.display = formBox.style.display === "none" ? "block" : "none";
 }
 
-function mapSheetToTab(sheet){
-  return {
-    "Vessel_Join":"crew-joining",
-    "Arrivals":"arrivals-tab",
-    "Updates":"updates-tab",
-    "Memo":"memo-tab",
-    "Training":"training-tab",
-    "Pni":"pni-tab"
-  }[sheet] || "";
+// --------------------------
+// LOAD DASHBOARD COUNTS
+// --------------------------
+function loadDashboardCounts() {
+  fetch(GAS_URL + "?action=getCounts")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("dash-join").textContent = data.joining || 0;
+      document.getElementById("dash-arrivals").textContent = data.arrivals || 0;
+      document.getElementById("dash-updates").textContent = data.updates || 0;
+      document.getElementById("dash-memo").textContent = data.memo || 0;
+      document.getElementById("dash-training").textContent = data.training || 0;
+      document.getElementById("dash-pni").textContent = data.pni || 0;
+    })
+    .catch(err => console.error("Error loading dashboard counts", err));
 }
 
-function mapSheetToDataContainer(sheet){
-  return {
-    "Vessel_Join":"crew-join-data",
-    "Arrivals":"crew-arrivals-data",
-    "Updates":"daily-updates-data",
-    "Memo":"memo-data",
-    "Training":"training-data",
-    "Pni":"pni-data"
-  }[sheet] || "";
-}
-
-function getColumnsForSheet(sheet){
-  return {
-    "Vessel_Join":["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"],
-    "Arrivals":["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"],
-    "Updates":["Timestamp","Title","Details","Date","UID"],
-    "Memo":["Timestamp","Title","Details","Date","UID"],
-    "Training":["Timestamp","Subject","Details","Date","UID"],
-    "Pni":["Timestamp","Subject","Details","Date","UID"]
-  }[sheet] || [];
-}
-
-/* --------------------- TABLE LOADER --------------------- */
-async function loadTable(sheet, containerId, columns){
-  const div = qs(containerId);
-  if(!div) return console.warn("Missing container:", containerId);
-  div.innerHTML = "<div>Loading...</div>";
-
-  try{
-    const data = await apiFetch(new URLSearchParams({ sheet, action:"get" })).catch(()=>[]);
-    if(!data || !data.length){ div.innerHTML = "<small>No records</small>"; return; }
-
-    const table = document.createElement("table");
-    table.className = "table table-sm table-bordered";
-
-    const displayCols = columns.filter(c=>c!=="UID" && c!=="Timestamp");
-    const thead = document.createElement("thead");
-    thead.innerHTML = `<tr>${displayCols.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}<th>Actions</th></tr>`;
-    table.appendChild(thead);
-
-    const tbody = document.createElement("tbody");
-    (data || []).slice().reverse().forEach(row=>{
-      const tr = document.createElement("tr");
-      columns.forEach(col=>{
-        if(col==="UID" || col==="Timestamp") return;
-        let val = row[col] || "";
-        if(
-          (sheet==="Vessel_Join" && col==="Vessel") ||
-          (sheet==="Arrivals" && col==="Vessel") ||
-          (sheet==="Updates" && col==="Title") ||
-          (sheet==="Memo" && col==="Title") ||
-          (sheet==="Training" && col==="Subject") ||
-          (sheet==="Pni" && col==="Subject")
-        ) val = `<b>${escapeHtml(String(val))}</b>`;
-        else val = escapeHtml(String(val));
-        tr.innerHTML += `<td>${val}</td>`;
+// --------------------------
+// LOAD DATA TABLES
+// --------------------------
+function loadTable(section) {
+  fetch(GAS_URL + `?action=getData&section=${section}`)
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById(`${section}-data`);
+      if (!data.length) {
+        container.innerHTML = "<p>No records found.</p>";
+        return;
+      }
+      let html = `<table class="table table-bordered"><thead><tr>`;
+      Object.keys(data[0]).forEach(key => html += `<th>${key}</th>`);
+      html += `<th>Actions</th></tr></thead><tbody>`;
+      data.forEach(row => {
+        html += `<tr>`;
+        Object.values(row).forEach(val => html += `<td>${val}</td>`);
+        html += `<td>
+          <button class="btn btn-sm btn-warning" onclick="editRecord('${section}','${row.id}')">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteRecord('${section}','${row.id}')">Delete</button>
+        </td>`;
+        html += `</tr>`;
       });
-
-      const uidSafe = row.UID || "";
-      tr.innerHTML += `<td>
-        <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${sheet}','${uidSafe}')">Edit</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="deleteRowConfirm('${sheet}','${uidSafe}')">Delete</button>
-      </td>`;
-
-      tbody.appendChild(tr);
+      html += `</tbody></table>`;
+      container.innerHTML = html;
     });
+}
 
-    table.appendChild(tbody);
-    div.innerHTML = "";
-    div.appendChild(table);
-  }catch(err){
-    div.innerHTML = "<div class='text-danger'>Failed to load table</div>";
-    debugLog("loadTable error", sheet, err);
+// --------------------------
+// EDIT & DELETE RECORD
+// --------------------------
+function editRecord(section, id) {
+  alert(`Edit record ${id} in ${section} (implement form prefill)`);
+}
+
+function deleteRecord(section, id) {
+  if (!confirm("Are you sure you want to delete?")) return;
+  fetch(GAS_URL + `?action=delete&section=${section}&id=${id}`, { method: "POST" })
+    .then(res => res.json())
+    .then(() => loadTable(section));
+}
+
+// --------------------------
+// CHATBOARD
+// --------------------------
+function sendMessage() {
+  const msgInput = document.getElementById("chat-input");
+  const msg = msgInput.value.trim();
+  if (!msg) return;
+
+  fetch(GAS_URL + "?action=chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: msg })
+  })
+    .then(() => {
+      msgInput.value = "";
+      loadChat();
+    });
+}
+
+function loadChat() {
+  fetch(GAS_URL + "?action=getChat")
+    .then(res => res.json())
+    .then(data => {
+      const board = document.getElementById("chatboard");
+      board.innerHTML = data.map(m => `<p><b>${m.user}:</b> ${m.text}</p>`).join("");
+    });
+}
+
+// --------------------------
+// STICKY NOTE
+// --------------------------
+const stickyText = document.getElementById("sticky-text");
+stickyText.value = localStorage.getItem("sticky") || "";
+stickyText.addEventListener("input", () => {
+  localStorage.setItem("sticky", stickyText.value);
+});
+
+// --------------------------
+// INIT
+// --------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  // Hide login overlay if user already logged in (optional)
+  if (!localStorage.getItem("loggedIn")) {
+    document.getElementById("login-overlay").style.display = "flex";
+  } else {
+    loadDashboardCounts();
   }
-}
 
-/* --------------------- Add / Form Handlers --------------------- */
-// All renderForm, handleAddX functions, toggleForm remain the same as your previous app.js
-// Copy exactly from your current app.js to keep Add functionality intact
-
-/* --------------------- Edit / Delete --------------------- */
-// openEditModal, submitEdit, deleteRowConfirm, deleteRow remain the same
-
-/* --------------------- PDF / Chat / Sticky --------------------- */
-// generateItemPDF, generateAllPDF, loadChat, sendMessage, sticky note event remain the same
-
-/* --------------------- Initialization --------------------- */
-async function initReload(){
-  await loadAllData();    
-  await loadDashboard();
-}
-
-window.addEventListener("load", ()=>{
-  if(sessionStorage.getItem("loggedInUser")) initReload();
+  // Load tables initially
+  ["crew-join","crew-arrivals","daily-updates","memo","training","pni"].forEach(loadTable);
+  loadChat();
 });

@@ -1,28 +1,23 @@
 /* ============================================================
-   PTSC / THRI Crew Dashboard - FULL (Option A)
-   - Complete frontend JS compatible with your HTML & Code.gs
-   - Actions used: get, getItem, add, update, delete, chat
-   - Make sure GAS_URL points to your deployed Apps Script web app
+   PTSC / THRI Crew Dashboard - FULL (Updated)
+   - Dashboard Open buttons now load full tables like sidebar
+   - Maintains all forms, add/edit/delete, chat, PDF export, sticky notes
 ============================================================= */
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwA2GmgDpwDZJuuquwRjucregz9PkmZn2N1ZYa6A_FstEEP3wt8Fu8gtavv-g6Endzb/exec"; // <-- replace if needed
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwA2GmgDpwDZJuuquwRjucregz9PkmZn2N1ZYa6A_FstEEP3wt8Fu8gtavv-g6Endzb/exec";
 
 /* --------------------- Utilities --------------------- */
 function qs(id){ return document.getElementById(id); }
 
-function debugLog(...args){
-  if(window.console && console.log) console.log(...args);
-}
+function debugLog(...args){ if(window.console && console.log) console.log(...args); }
 
 async function apiFetch(params){
-  // params is URLSearchParams or object convertible via toString()
   const url = `${GAS_URL}?${params.toString()}`;
   debugLog("DEBUG → apiFetch URL:", url);
   const res = await fetch(url).catch(e => { throw new Error("Network fetch failed: " + e.message); });
   if(!res.ok) throw new Error("Network error: " + res.status);
   const j = await res.json().catch(e => { throw new Error("Invalid JSON response"); });
   if(j.status && j.status !== "success") throw new Error(j.message || "API error");
-  // Some backends return {status:'success', data: ...}
   return j.data === undefined ? j : j.data;
 }
 
@@ -38,7 +33,6 @@ function shortDate(v){
   return d.toLocaleDateString();
 }
 
-// safe DOM id generator for header names or field names
 function makeId(name, prefix = "edit-"){
   return prefix + String(name).replace(/[^\w\-]/g, "_");
 }
@@ -70,7 +64,6 @@ async function loginUser(){
 }
 
 document.addEventListener("DOMContentLoaded", ()=>{
-  // Hide login overlay if already logged in
   if(sessionStorage.getItem("loggedInUser")){
     qs("login-overlay") && (qs("login-overlay").style.display = "none");
     showTab("dashboard");
@@ -85,66 +78,27 @@ function showTab(tabId) {
   // Hide all tabs
   document.querySelectorAll('.tab-window').forEach(tab => tab.style.display = 'none');
 
-  // Show the selected tab
-  const tab = document.getElementById(tabId);
-  if (tab) tab.style.display = 'block';
-
-  // Highlight the sidebar (optional)
-  document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
-  const sidebarItem = document.querySelector(`[data-tab='${tabId}']`);
-  if (sidebarItem) sidebarItem.classList.add('active');
-
-  // Load full data for the tab
-  switch(tabId) {
-    case 'crew-joining': loadCrewJoiningData(); break;
-    case 'arrivals-tab': loadArrivalsData(); break;
-    case 'updates-tab': loadUpdatesData(); break;
-    case 'memo-tab': loadMemoData(); break;
-    case 'training-tab': loadTrainingData(); break;
-    case 'pni-tab': loadPniData(); break;
-  }
-}
-
-/* --------------------- DASHBOARD PREVIEW --------------------- */
-// Map sheet names to tab container IDs
-function mapSheetToContainer(sheet) {
-  const map = {
-    "Vessel_Join": "crew-joining",   // Tab ID for Vessel Join
-    "Arrivals": "arrivals-tab",
-    "Updates": "updates-tab",
-    "Memo": "memo-tab",
-    "Training": "training-tab",
-    "Pni": "pni-tab"
-  };
-  return map[sheet] || "";
-}
-
-// Show a tab (like sidebar click)
-function showTab(tabId) {
-  // Hide all tabs
-  document.querySelectorAll('.tab-window').forEach(tab => tab.style.display = 'none');
-
   // Show selected tab
-  const tab = document.getElementById(tabId);
-  if (tab) tab.style.display = 'block';
+  const tab = qs(tabId);
+  if(tab) tab.style.display = 'block';
 
   // Highlight sidebar
   document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
   const sidebarItem = document.querySelector(`[data-tab='${tabId}']`);
-  if (sidebarItem) sidebarItem.classList.add('active');
+  if(sidebarItem) sidebarItem.classList.add('active');
 
-  // Load full data for this tab
-  switch(tabId) {
-    case 'crew-joining': loadCrewJoiningData(); break;
-    case 'arrivals-tab': loadArrivalsData(); break;
-    case 'updates-tab': loadUpdatesData(); break;
-    case 'memo-tab': loadMemoData(); break;
-    case 'training-tab': loadTrainingData(); break;
-    case 'pni-tab': loadPniData(); break;
+  // Load full table for tab
+  switch(tabId){
+    case 'crew-joining': loadTable("Vessel_Join","crew-join-data", getColumnsForSheet("Vessel_Join")); break;
+    case 'arrivals-tab': loadTable("Arrivals","crew-arrivals-data", getColumnsForSheet("Arrivals")); break;
+    case 'updates-tab': loadTable("Updates","daily-updates-data", getColumnsForSheet("Updates")); break;
+    case 'memo-tab': loadTable("Memo","memo-data", getColumnsForSheet("Memo")); break;
+    case 'training-tab': loadTable("Training","training-data", getColumnsForSheet("Training")); break;
+    case 'pni-tab': loadTable("Pni","pni-data", getColumnsForSheet("Pni")); break;
   }
 }
 
-// Main dashboard loader
+/* --------------------- DASHBOARD PREVIEW --------------------- */
 async function loadDashboard() {
   const map = {
     "Vessel_Join": "dash-join",
@@ -155,12 +109,12 @@ async function loadDashboard() {
     "Pni": "dash-pni"
   };
 
-  for (const sheet in map) {
-    const box = document.getElementById(map[sheet]);
-    if (!box) continue;
+  for(const sheet in map){
+    const box = qs(map[sheet]);
+    if(!box) continue;
     box.innerHTML = "Loading...";
 
-    try {
+    try{
       const data = await apiFetch(new URLSearchParams({ sheet, action: "get" })).catch(() => []);
       const count = (data || []).length;
 
@@ -172,520 +126,68 @@ async function loadDashboard() {
         <h2>${count}</h2>
         <button class="btn btn-sm btn-secondary mt-2" onclick="generateAllPDF('${sheet}')">Export PDF</button>
       `;
-    } catch (err) {
+    }catch(err){
       box.innerHTML = "<small>Error loading</small>";
       console.error("loadDashboard error", sheet, err);
     }
   }
 }
 
-/* --------------------- TABLE RENDERING --------------------- */
-async function loadAllData(){
-  await Promise.all([
-    loadTable("Vessel_Join","crew-join-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"]),
-    loadTable("Arrivals","crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"]),
-    loadTable("Updates","daily-updates-data", ["Timestamp","Title","Details","Date","UID"]),
-    loadTable("Memo","memo-data", ["Timestamp","Title","Details","Date","UID"]),
-    loadTable("Training","training-data", ["Timestamp","Subject","Details","Date","UID"]),
-    loadTable("Pni","pni-data", ["Timestamp","Subject","Details","Date","UID"])
-  ]).catch(e => debugLog("loadAllData err", e));
-  await loadChat();
-}
-
+/* --------------------- TABLES --------------------- */
 async function loadTable(sheet, containerId, columns){
   const div = qs(containerId);
   if(!div){ console.warn("Missing container:", containerId); return; }
   div.innerHTML = "<div>Loading...</div>";
+
   try{
     const data = await apiFetch(new URLSearchParams({ sheet, action: "get" })).catch(()=>[]);
     if(!data || !data.length){ div.innerHTML = "<div><small>No records</small></div>"; return; }
 
-    // build table
     const table = document.createElement("table");
     table.className = "table table-sm table-bordered";
-    const displayCols = columns.filter(c => c !== "UID" && c !== "Timestamp");
-const thead = document.createElement("thead");
-thead.innerHTML = `<tr>${displayCols.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}<th>Actions</th></tr>`;
+
+    const displayCols = columns.filter(c=>c!=="UID" && c!=="Timestamp");
+    const thead = document.createElement("thead");
+    thead.innerHTML = `<tr>${displayCols.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}<th>Actions</th></tr>`;
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
-    (data || []).slice().reverse().forEach(row => {
+    (data || []).slice().reverse().forEach(row=>{
       const tr = document.createElement("tr");
-      columns.forEach(col => {
-    if(col === "UID" || col === "Timestamp") return; // skip these fields
-    let val = row[col] || "";
-    if(
-      (sheet === "Vessel_Join" && col === "Vessel") ||
-      (sheet === "Arrivals" && col === "Vessel") ||
-      (sheet === "Updates" && col === "Title") ||
-      (sheet === "Memo" && col === "Title") ||
-      (sheet === "Training" && col === "Subject") ||
-      (sheet === "Pni" && col === "Subject")
-    ){
-      val = `<b>${escapeHtml(String(val))}</b>`;
-    } else {
-      val = escapeHtml(String(val));
-    }
-    tr.innerHTML += `<td>${val}</td>`;
-});
-
+      columns.forEach(col=>{
+        if(col==="UID" || col==="Timestamp") return;
+        let val = row[col] || "";
+        if(["Vessel","Title","Subject"].includes(col)) val = `<b>${escapeHtml(String(val))}</b>`;
+        else val = escapeHtml(String(val));
+        tr.innerHTML += `<td>${val}</td>`;
+      });
       const uidSafe = row.UID || "";
       tr.innerHTML += `<td>
         <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEditModal('${sheet}','${uidSafe}')">Edit</button>
         <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRowConfirm('${sheet}','${uidSafe}')">Delete</button>
-        </td>`;
-
+      </td>`;
       tbody.appendChild(tr);
     });
 
     table.appendChild(tbody);
     div.innerHTML = "";
     div.appendChild(table);
+
   }catch(err){
     div.innerHTML = `<div class='text-danger'>Failed to load table</div>`;
     debugLog("loadTable", sheet, err);
   }
 }
 
-/* --------------------- FORMS (render functions) --------------------- */
-function renderJoinForm(){
-  return `
-    <div class="row g-2">
-      <div class="col-md-4"><input id="vj-vessel" class="form-control" placeholder="Vessel"></div>
-      <div class="col-md-4"><input id="vj-principal" class="form-control" placeholder="Principal"></div>
-      <div class="col-md-4"><input id="vj-port" class="form-control" placeholder="Port"></div>
-      <div class="col-md-4"><input id="vj-crew" class="form-control" placeholder="No. of Crew"></div>
-      <div class="col-md-4"><input id="vj-rank" class="form-control" placeholder="Rank"></div>
-      <div class="col-md-4"><input id="vj-date" type="date" class="form-control"></div>
-      <div class="col-md-4"><input id="vj-flight" class="form-control" placeholder="Flight"></div>
-    </div>
-    <div class="mt-2">
-      <button type="button" class="btn btn-success" onclick="handleAddVesselJoin()">Save</button>
-      <button type="button" class="btn btn-secondary" onclick="toggleForm('join')">Cancel</button>
-    </div>
-  `;
-}
-
-function renderArrivalsForm(){
-  return `
-    <div class="row g-2">
-      <div class="col-md-4"><input id="av-vessel" class="form-control" placeholder="Vessel"></div>
-      <div class="col-md-4"><input id="av-principal" class="form-control" placeholder="Principal"></div>
-      <div class="col-md-4"><input id="av-port" class="form-control" placeholder="Port"></div>
-      <div class="col-md-4"><input id="av-crew" class="form-control" placeholder="No. of Crew"></div>
-      <div class="col-md-4"><input id="av-rank" class="form-control" placeholder="Rank"></div>
-      <div class="col-md-4"><input id="av-date" type="date" class="form-control"></div>
-      <div class="col-md-4"><input id="av-flight" class="form-control" placeholder="Flight"></div>
-    </div>
-    <div class="mt-2">
-      <button type="button" class="btn btn-success" onclick="handleAddArrivals()">Save</button>
-      <button type="button" class="btn btn-secondary" onclick="toggleForm('arrivals')">Cancel</button>
-    </div>
-  `;
-}
-
-function renderUpdatesForm(){
-  return `
-    <input id="up-title" class="form-control mb-2" placeholder="Title">
-    <textarea id="up-details" class="form-control mb-2" placeholder="Details"></textarea>
-    <input id="up-date" type="date" class="form-control mb-2">
-    <div class="mt-2">
-      <button type="button" class="btn btn-success" onclick="handleAddUpdate()">Save</button>
-      <button type="button" class="btn btn-secondary" onclick="toggleForm('updates')">Cancel</button>
-    </div>
-  `;
-}
-
-function renderMemoForm(){
-  return `
-    <input id="memo-title" class="form-control mb-2" placeholder="Title">
-    <textarea id="memo-details" class="form-control mb-2" placeholder="Details"></textarea>
-    <input id="memo-date" type="date" class="form-control mb-2">
-    <div class="mt-2">
-      <button type="button" class="btn btn-success" onclick="handleAddMemo()">Save</button>
-      <button type="button" class="btn btn-secondary" onclick="toggleForm('memo')">Cancel</button>
-    </div>
-  `;
-}
-
-function renderTrainingForm(){
-  return `
-    <input id="tr-subject" class="form-control mb-2" placeholder="Subject">
-    <textarea id="tr-details" class="form-control mb-2" placeholder="Details"></textarea>
-    <input id="tr-date" type="date" class="form-control mb-2">
-    <div class="mt-2">
-      <button type="button" class="btn btn-success" onclick="handleAddTraining()">Save</button>
-      <button type="button" class="btn btn-secondary" onclick="toggleForm('training')">Cancel</button>
-    </div>
-  `;
-}
-
-function renderPniForm(){
-  return `
-    <input id="pn-subject" class="form-control mb-2" placeholder="Subject">
-    <textarea id="pn-details" class="form-control mb-2" placeholder="Details"></textarea>
-    <input id="pn-date" type="date" class="form-control mb-2">
-    <div class="mt-2">
-      <button type="button" class="btn btn-success" onclick="handleAddPni()">Save</button>
-      <button type="button" class="btn btn-secondary" onclick="toggleForm('pni')">Cancel</button>
-    </div>
-  `;
-}
-
-/* --------------------- TOGGLE FORM --------------------- */
-function toggleForm(id){
-  const map = {
-    join: "join-form",
-    arrivals: "arrival-form",
-    updates: "update-form",
-    memo: "memo-form",
-    training: "training-form",
-    pni: "pni-form"
-  };
-  const containerId = map[id];
-  if(!containerId) return;
-  const c = qs(containerId);
-  if(!c) return console.warn("Missing form container", containerId);
-
-  if(c.style.display === "block"){
-    c.style.display = "none";
-  } else {
-    // render correct form
-    const html = ({
-      join: renderJoinForm,
-      arrivals: renderArrivalsForm,
-      updates: renderUpdatesForm,
-      memo: renderMemoForm,
-      training: renderTrainingForm,
-      pni: renderPniForm
-    }[id] || (()=>""))();
-    c.innerHTML = html;
-    c.style.display = "block";
-    // set default date values if any
-    c.querySelectorAll && c.querySelectorAll("input[type=date]").forEach(i=> { if(!i.value) i.value = new Date().toISOString().slice(0,10); });
-  }
-}
-
-/* --------------------- ADD HANDLERS --------------------- */
-async function handleAddVesselJoin(){
-  const fields = {
-    Vessel: qs("vj-vessel")?.value || "",
-    Principal: qs("vj-principal")?.value || "",
-    Port: qs("vj-port")?.value || "",
-    "No. of Crew": qs("vj-crew")?.value || "",
-    Rank: qs("vj-rank")?.value || "",
-    Date: qs("vj-date")?.value || "",
-    Flight: qs("vj-flight")?.value || ""
-  };
-  try{
-    await addRowData("Vessel_Join", fields);
-    alert("Added Vessel Joining");
-    toggleForm('join');
-    await loadTable("Vessel_Join","crew-join-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"]);
-    await loadDashboard();
-  }catch(e){ alert("Add failed: "+e.message); console.error("handleAddVesselJoin", e); }
-}
-
-async function handleAddArrivals(){
-  const fields = {
-    Vessel: qs("av-vessel")?.value || "",
-    Principal: qs("av-principal")?.value || "",
-    Port: qs("av-port")?.value || "",
-    "No. of Crew": qs("av-crew")?.value || "",
-    Rank: qs("av-rank")?.value || "",
-    Date: qs("av-date")?.value || "",
-    Flight: qs("av-flight")?.value || ""
-  };
-  try{
-    await addRowData("Arrivals", fields);
-    alert("Added Arrival");
-    toggleForm('arrivals');
-    await loadTable("Arrivals","crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"]);
-    await loadDashboard();
-  }catch(e){ alert("Add failed: "+e.message); console.error("handleAddArrivals", e); }
-}
-
-async function handleAddUpdate(){
-  const fields = {
-    Title: qs("up-title")?.value || "",
-    Details: qs("up-details")?.value || "",
-    Date: qs("up-date")?.value || ""
-  };
-  try{
-    await addRowData("Updates", fields);
-    alert("Added Update");
-    toggleForm('updates');
-    await loadTable("Updates","daily-updates-data", ["Timestamp","Title","Details","Date","UID"]);
-    await loadDashboard();
-  }catch(e){ alert("Add failed: "+e.message); console.error("handleAddUpdate", e); }
-}
-
-async function handleAddMemo(){
-  const fields = {
-    Title: qs("memo-title")?.value || "",
-    Details: qs("memo-details")?.value || "",
-    Date: qs("memo-date")?.value || ""
-  };
-  try{
-    await addRowData("Memo", fields);
-    alert("Added Memo");
-    toggleForm('memo');
-    await loadTable("Memo","memo-data", ["Timestamp","Title","Details","Date","UID"]);
-    await loadDashboard();
-  }catch(e){ alert("Add failed: "+e.message); console.error("handleAddMemo", e); }
-}
-
-async function handleAddTraining(){
-  const fields = {
-    Subject: qs("tr-subject")?.value || "",
-    Details: qs("tr-details")?.value || "",
-    Date: qs("tr-date")?.value || ""
-  };
-  try{
-    await addRowData("Training", fields);
-    alert("Training added");
-    toggleForm('training');
-    await loadTable("Training","training-data", ["Timestamp","Subject","Details","Date","UID"]);
-    await loadDashboard();
-  }catch(e){ alert("Add failed: "+e.message); console.error("handleAddTraining", e); }
-}
-
-async function handleAddPni(){
-  const fields = {
-    Subject: qs("pn-subject")?.value || "",
-    Details: qs("pn-details")?.value || "",
-    Date: qs("pn-date")?.value || ""
-  };
-  try{
-    await addRowData("Pni", fields);
-    alert("P&I Event added");
-    toggleForm('pni');
-    await loadTable("Pni","pni-data", ["Timestamp","Subject","Details","Date","UID"]);
-    await loadDashboard();
-  }catch(e){ alert("Add failed: "+e.message); console.error("handleAddPni", e); }
-}
-
-/* --------------------- EDIT --------------------- */
-let currentEdit = { sheet: null, uid: null, row: null };
-
-async function openEditModal(sheet, uid){
-  debugLog("DEBUG → openEditModal:", sheet, uid);
-  if(!uid){ alert("Cannot edit: UID missing"); return; }
-  try{
-    const item = await apiFetch(new URLSearchParams({ sheet, action: "getItem", UID: uid }));
-    if(!item){ alert("Item not found"); return; }
-    currentEdit = { sheet, uid, row: item };
-
-    let html = `<h5>Edit ${escapeHtml(sheet)}</h5>`;
-    for(const k in item){
-      if(k === "UID" || k === "Timestamp") continue;
-      const val = escapeHtml(String(item[k] || ""));
-      const inputId = makeId(k, "edit-");
-      if(k.toLowerCase().includes("details") || k.toLowerCase().includes("message")){
-        html += `<label>${escapeHtml(k)}</label><textarea id="${inputId}" class="form-control mb-2">${val}</textarea>`;
-      } else if(k.toLowerCase().includes("date")){
-        const v = val ? (new Date(val)).toISOString().slice(0,10) : "";
-        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${v}">`;
-      } else {
-        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" class="form-control mb-2" value="${val}">`;
-      }
-    }
-    html += `<div class="mt-2">
-               <button type="button" class="btn btn-primary" onclick="submitEdit()">Save</button>
-               <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-             </div>`;
-    showModal(html);
-  }catch(err){
-    alert("Error loading item: " + err.message);
-    debugLog("openEditModal error", err);
-  }
-}
-
-async function submitEdit(){
-  if(!currentEdit.uid || !currentEdit.sheet){ alert("Cannot save: UID or sheet missing"); return; }
-  try{
-    const p = new URLSearchParams({ sheet: currentEdit.sheet, action: "update", UID: currentEdit.uid });
-    for(const k in currentEdit.row){
-  if(k === "UID" || k === "Timestamp") continue;
-  const el = qs(makeId(k, "edit-"));
-  if(el){
-    let val = el.value;
-    if(Array.isArray(val)) val = val[0];       // safeguard
-    p.set(k, String(val || ""));
-  }
-}
-    await apiFetch(p);
-    alert("Updated successfully");
-    closeModal();
-    await loadTable(currentEdit.sheet, mapSheetToContainer(currentEdit.sheet), getColumnsForSheet(currentEdit.sheet));
-    await loadDashboard();
-  }catch(err){
-    alert("Update failed: " + err.message);
-    debugLog("submitEdit error", err);
-  }
-}
-
-/* --------------------- DELETE --------------------- */
-function deleteRowConfirm(sheet, uid){
-  if(!uid){ alert("Cannot delete: UID missing"); return; }
-  if(!confirm("Delete this item? It will be moved to Archive.")) return;
-  deleteRow(sheet, uid);
-}
-
-async function deleteRow(sheet, uid){
-  try{
-    await apiFetch(new URLSearchParams({ sheet, action: "delete", UID: uid }));
-    alert("Deleted");
-    await loadTable(sheet, mapSheetToContainer(sheet), getColumnsForSheet(sheet));
-    await loadDashboard();
-  }catch(err){
-    alert("Delete failed: " + err.message);
-    debugLog("deleteRow error", err);
-  }
-}
-
-/* --------------------- CHAT --------------------- */
-async function loadChat(){
-  const box = qs("chatboard");
-  if(!box) return;
-  box.innerHTML = "Loading...";
-  try{
-    const data = await apiFetch(new URLSearchParams({ sheet: "Chatboard", action: "get" })).catch(()=>[]);
-    box.innerHTML = "";
-    (data || []).slice().reverse().forEach(r=>{
-      const d = document.createElement("div");
-      d.className = "message";
-      d.innerHTML = `<small>[${shortDate(r.Timestamp)}] <b>${escapeHtml(r.Name||"")}</b>: ${escapeHtml(r.Message||"")}</small>`;
-      box.appendChild(d);
-    });
-    if(!(data||[]).length) box.innerHTML = "<small>No chat messages</small>";
-  }catch(err){
-    debugLog("loadChat error", err);
-    box.innerHTML = "<small>Error loading chat</small>";
-  }
-}
-
-async function sendMessage(){
-  const input = qs("chat-input");
-  if(!input) return;
-  const msg = input.value.trim();
-  if(!msg) return;
-  try{
-    await apiFetch(new URLSearchParams({ sheet: "Chatboard", action: "chat", Name: sessionStorage.getItem("loggedInUser")||"User", Message: msg }));
-    input.value = "";
-    await loadChat();
-  }catch(err){
-    alert("Chat failed: " + err.message);
-    debugLog("sendMessage error", err);
-  }
-}
-
-/* --------------------- PDF --------------------- */
-function getJsPdf(){
-  // Support multiple loader styles
-  if(window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
-  if(window.jsPDF) return window.jsPDF;
-  return null;
-}
-
-async function generateItemPDF(sheet, uid){
-  if(!uid){ alert("Cannot generate PDF: UID missing"); return; }
-  try{
-    const item = await apiFetch(new URLSearchParams({ sheet, action: "getItem", UID: uid }));
-    if(!item){ alert("Item not found"); return; }
-    const jsPDFCtor = getJsPdf();
-    if(!jsPDFCtor){ alert("jsPDF not loaded"); return; }
-    const doc = new jsPDFCtor();
-    doc.setFontSize(14);
-    doc.text(`${sheet} Record`, 14, 20);
-    const rows = Object.entries(item).map(([k,v]) => [k, String(v)]);
-    if(doc.autoTable) doc.autoTable({ startY: 30, head: [["Field","Value"]], body: rows });
-    else {
-      let y=30;
-      rows.forEach(r=> { doc.text(`${r[0]}: ${r[1]}`, 14, y); y+=10; });
-    }
-    doc.save(`${sheet}_${uid}.pdf`);
-  }catch(err){
-    alert("PDF failed: " + err.message);
-    debugLog("generateItemPDF error", err);
-  }
-}
-
-async function generateAllPDF(sheet){
-  try{
-    const live = await apiFetch(new URLSearchParams({ sheet, action: "get" })).catch(()=>[]);
-    const archived = await apiFetch(new URLSearchParams({ sheet: "Archive_"+sheet, action: "get" })).catch(()=>[]);
-    const all = [...(live||[]), ...(archived||[])];
-    if(!all.length){ alert("No records to export."); return; }
-    const jsPDFCtor = getJsPdf();
-    if(!jsPDFCtor){ alert("jsPDF not loaded"); return; }
-    const doc = new jsPDFCtor('p','pt','a4');
-    doc.text(`${sheet} — All Entries`, 40, 40);
-    const headers = Object.keys(all[0]);
-    const body = all.map(r => headers.map(h => r[h] || ""));
-    if(doc.autoTable) doc.autoTable({ startY:60, head:[headers], body });
-    doc.save(`${sheet}_all.pdf`);
-  }catch(err){
-    alert("All PDF failed: " + err.message);
-    debugLog("generateAllPDF error", err);
-  }
-}
-
-/* --------------------- STICKY NOTE --------------------- */
-qs("sticky-text")?.addEventListener("input", e=>{
-  sessionStorage.setItem("stickyNote", e.target.value);
-});
-document.addEventListener("DOMContentLoaded", ()=>{
-  if(qs("sticky-text")) qs("sticky-text").value = sessionStorage.getItem("stickyNote") || "";
-});
-
-/* --------------------- Modal helpers --------------------- */
-function showModal(content){
-  closeModal(); // ensure single
-  const modal = document.createElement("div");
-  modal.id = "app-modal-backdrop";
-  modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999;";
-  const box = document.createElement("div");
-  box.style.cssText = "background:#fff;padding:18px;border-radius:8px;max-width:820px;width:94%;max-height:90vh;overflow:auto;";
-  box.innerHTML = content;
-  modal.appendChild(box);
-  modal.addEventListener("click", e => { if(e.target === modal) closeModal(); });
-  document.body.appendChild(modal);
-}
-
-function closeModal(){
-  const m = qs("app-modal-backdrop");
-  if(m) m.remove();
-}
-
-/* --------------------- Add row wrapper --------------------- */
-async function addRowData(sheet, fieldsObj){
-  const params = new URLSearchParams({ sheet, action: "add" });
-  
-  // Convert all values to string to prevent array issues
-  for(const k in fieldsObj){
-    let val = fieldsObj[k];
-    if(Array.isArray(val)) val = val[0];       // take first item if array
-    params.set(k, String(val || ""));          // ensure string
-  }
-
-  // Debug: check what is sent
-  console.log("Adding to GAS:", [...params.entries()]);
-  
-  return await apiFetch(params);
-}
-
-
-/* --------------------- Helpers to map sheet -> container/columns --------------------- */
+/* --------------------- MAP SHEET → TAB --------------------- */
 function mapSheetToContainer(sheet){
   return {
-    "Vessel_Join":"crew-join-data",
-    "Arrivals":"crew-arrivals-data",
-    "Updates":"daily-updates-data",
-    "Memo":"memo-data",
-    "Training":"training-data",
-    "Pni":"pni-data",
-    "Chatboard":"chatboard"
+    "Vessel_Join":"crew-joining",
+    "Arrivals":"arrivals-tab",
+    "Updates":"updates-tab",
+    "Memo":"memo-tab",
+    "Training":"training-tab",
+    "Pni":"pni-tab"
   }[sheet] || null;
 }
 
@@ -700,13 +202,12 @@ function getColumnsForSheet(sheet){
   }[sheet] || [];
 }
 
-/* --------------------- Initialization --------------------- */
+/* --------------------- INITIALIZATION --------------------- */
 async function initReload(){
-  await loadAllData();
-  await loadDashboard();
+  await loadDashboard();   // show dashboard cards
+  await loadAllData();     // preload all tables
 }
 
-// Auto init when page loads (safeguard)
 window.addEventListener("load", ()=>{ 
   if(sessionStorage.getItem("loggedInUser")) initReload();
 });

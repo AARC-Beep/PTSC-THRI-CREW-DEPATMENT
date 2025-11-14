@@ -158,8 +158,9 @@ async function loadTable(sheet, containerId, columns){
     // build table
     const table = document.createElement("table");
     table.className = "table table-sm table-bordered";
-    const thead = document.createElement("thead");
-    thead.innerHTML = `<tr>${columns.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}<th>Actions</th></tr>`;
+    const displayCols = columns.filter(c => c !== "UID" && c !== "Timestamp");
+const thead = document.createElement("thead");
+thead.innerHTML = `<tr>${displayCols.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}<th>Actions</th></tr>`;
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");

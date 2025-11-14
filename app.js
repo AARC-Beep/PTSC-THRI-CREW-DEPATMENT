@@ -109,12 +109,12 @@ function showTab(tabId) {
 // Map sheet names to tab container IDs
 function mapSheetToContainer(sheet) {
   const map = {
-    "Vessel_Join": "crew-joining",   // Crew Joining tab
-    "Arrivals": "arrivals-tab",      // Arrivals tab
-    "Updates": "updates-tab",        // Updates tab
-    "Memo": "memo-tab",              // Memo tab
-    "Training": "training-tab",      // Training tab
-    "Pni": "pni-tab"                 // PNI tab
+    "Vessel_Join": "crew-joining",   // Tab ID for Vessel Join
+    "Arrivals": "arrivals-tab",
+    "Updates": "updates-tab",
+    "Memo": "memo-tab",
+    "Training": "training-tab",
+    "Pni": "pni-tab"
   };
   return map[sheet] || "";
 }
@@ -122,9 +122,7 @@ function mapSheetToContainer(sheet) {
 // Show a tab (like sidebar click)
 function showTab(tabId) {
   // Hide all tabs
-  document.querySelectorAll('.tab-window').forEach(tab => {
-    tab.style.display = 'none';
-  });
+  document.querySelectorAll('.tab-window').forEach(tab => tab.style.display = 'none');
 
   // Show selected tab
   const tab = document.getElementById(tabId);
@@ -135,7 +133,7 @@ function showTab(tabId) {
   const sidebarItem = document.querySelector(`[data-tab='${tabId}']`);
   if (sidebarItem) sidebarItem.classList.add('active');
 
-  // Load data dynamically if needed
+  // Load full data for this tab
   switch(tabId) {
     case 'crew-joining': loadCrewJoiningData(); break;
     case 'arrivals-tab': loadArrivalsData(); break;

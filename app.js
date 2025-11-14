@@ -101,35 +101,36 @@ document.querySelectorAll(".sidebar a[data-tab]").forEach(a=>{
 });
 
 /* --------------------- DASHBOARD PREVIEW --------------------- */
-async function loadDashboard(){
+async function loadDashboard() {
   const map = {
-    "Vessel_Join":"dash-join",
-    "Arrivals":"dash-arrivals",
-    "Updates":"dash-updates",
-    "Memo":"dash-memo",
-    "Training":"dash-training",
-    "Pni":"dash-pni"
+    "Vessel_Join": "dash-join",
+    "Arrivals": "dash-arrivals",
+    "Updates": "dash-updates",
+    "Memo": "dash-memo",
+    "Training": "dash-training",
+    "Pni": "dash-pni"
   };
-  for(const sheet in map){
+
+  for (const sheet in map) {
     const box = qs(map[sheet]);
-    if(!box) continue;
+    if (!box) continue;
     box.innerHTML = "Loading...";
-    try{
-      const data = await apiFetch(new URLSearchParams({ sheet, action: "get" })).catch(()=>[]);
-      const rows = (data || []).slice(-5).reverse();
-      box.innerHTML = "";
-      rows.forEach(r=>{
-        const d = document.createElement("div");
-        d.className = "card-body";
-        const dateField = r.Date ? shortDate(r.Date) : shortDate(r.Timestamp);
-        const title = r.Vessel || r.Title || r.Subject || "";
-        d.innerHTML = `<small>${escapeHtml(dateField)} • <b>${escapeHtml(title)}</b></small>`;
-        box.appendChild(d);
-      });
-      if(!rows.length) box.innerHTML = "<small>No recent items</small>";
-    }catch(err){
-      debugLog("loadDashboard error", sheet, err);
-      box.innerHTML = "<small>Error</small>";
+
+    try {
+      const data = await apiFetch(new URLSearchParams({ sheet, action: "get" })).catch(() => []);
+      const count = (data || []).length;
+
+      box.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong>${sheet.replace("_"," ")} </strong>
+          <button class="btn btn-sm btn-outline-primary" onclick="showTab('${mapSheetToContainer(sheet)}')">Open</button>
+        </div>
+        <h2>${count}</h2>
+        <button class="btn btn-sm btn-secondary mt-2" onclick="generateAllPDF('${sheet}')">Export PDF</button>
+      `;
+    } catch (err) {
+      box.innerHTML = "<small>Error loading</small>";
+      console.error("loadDashboard error", sheet, err);
     }
   }
 }

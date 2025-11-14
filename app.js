@@ -101,6 +101,47 @@ document.querySelectorAll(".sidebar a[data-tab]").forEach(a=>{
 });
 
 /* --------------------- DASHBOARD PREVIEW --------------------- */
+// Map sheet names to tab container IDs
+function mapSheetToContainer(sheet) {
+  const map = {
+    "Vessel_Join": "crew-joining",   // Crew Joining tab
+    "Arrivals": "arrivals-tab",      // Arrivals tab
+    "Updates": "updates-tab",        // Updates tab
+    "Memo": "memo-tab",              // Memo tab
+    "Training": "training-tab",      // Training tab
+    "Pni": "pni-tab"                 // PNI tab
+  };
+  return map[sheet] || "";
+}
+
+// Show a tab (like sidebar click)
+function showTab(tabId) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-window').forEach(tab => {
+    tab.style.display = 'none';
+  });
+
+  // Show selected tab
+  const tab = document.getElementById(tabId);
+  if (tab) tab.style.display = 'block';
+
+  // Highlight sidebar
+  document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+  const sidebarItem = document.querySelector(`[data-tab='${tabId}']`);
+  if (sidebarItem) sidebarItem.classList.add('active');
+
+  // Load data dynamically if needed
+  switch(tabId) {
+    case 'crew-joining': loadCrewJoiningData(); break;
+    case 'arrivals-tab': loadArrivalsData(); break;
+    case 'updates-tab': loadUpdatesData(); break;
+    case 'memo-tab': loadMemoData(); break;
+    case 'training-tab': loadTrainingData(); break;
+    case 'pni-tab': loadPniData(); break;
+  }
+}
+
+// Main dashboard loader
 async function loadDashboard() {
   const map = {
     "Vessel_Join": "dash-join",
@@ -112,7 +153,7 @@ async function loadDashboard() {
   };
 
   for (const sheet in map) {
-    const box = qs(map[sheet]);
+    const box = document.getElementById(map[sheet]);
     if (!box) continue;
     box.innerHTML = "Loading...";
 
@@ -122,7 +163,7 @@ async function loadDashboard() {
 
       box.innerHTML = `
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <strong>${sheet.replace("_"," ")} </strong>
+          <strong>${sheet.replace("_"," ")}</strong>
           <button class="btn btn-sm btn-outline-primary" onclick="showTab('${mapSheetToContainer(sheet)}')">Open</button>
         </div>
         <h2>${count}</h2>

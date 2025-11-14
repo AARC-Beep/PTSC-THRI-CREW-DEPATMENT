@@ -81,24 +81,29 @@ document.addEventListener("DOMContentLoaded", ()=>{
 });
 
 /* --------------------- TAB NAV --------------------- */
-function showTab(id){
-  document.querySelectorAll(".tab-window").forEach(t => t.classList.remove("active"));
-  const el = qs(id);
-  if(el) el.classList.add("active");
-}
+function showTab(tabId) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-window').forEach(tab => tab.style.display = 'none');
 
-document.querySelectorAll(".sidebar a[data-tab]").forEach(a=>{
-  a.addEventListener("click", e=>{
-    e.preventDefault();
-    const t = a.getAttribute("data-tab");
-    const r = sessionStorage.getItem("userRole");
-    if((t === "training" || t === "pni") && r !== "admin"){
-      alert("Access denied (Admin only)");
-      return;
-    }
-    showTab(t);
-  });
-});
+  // Show the selected tab
+  const tab = document.getElementById(tabId);
+  if (tab) tab.style.display = 'block';
+
+  // Highlight the sidebar (optional)
+  document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+  const sidebarItem = document.querySelector(`[data-tab='${tabId}']`);
+  if (sidebarItem) sidebarItem.classList.add('active');
+
+  // Load full data for the tab
+  switch(tabId) {
+    case 'crew-joining': loadCrewJoiningData(); break;
+    case 'arrivals-tab': loadArrivalsData(); break;
+    case 'updates-tab': loadUpdatesData(); break;
+    case 'memo-tab': loadMemoData(); break;
+    case 'training-tab': loadTrainingData(); break;
+    case 'pni-tab': loadPniData(); break;
+  }
+}
 
 /* --------------------- DASHBOARD PREVIEW --------------------- */
 // Map sheet names to tab container IDs

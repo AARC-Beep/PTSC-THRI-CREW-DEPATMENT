@@ -167,21 +167,22 @@ thead.innerHTML = `<tr>${displayCols.map(c=>`<th>${escapeHtml(c)}</th>`).join(""
     (data || []).slice().reverse().forEach(row => {
       const tr = document.createElement("tr");
       columns.forEach(col => {
-        let val = row[col] || "";
-        if(
-          (sheet === "Vessel_Join" && col === "Vessel") ||
-          (sheet === "Arrivals" && col === "Vessel") ||
-          (sheet === "Updates" && col === "Title") ||
-          (sheet === "Memo" && col === "Title") ||
-          (sheet === "Training" && col === "Subject") ||
-          (sheet === "Pni" && col === "Subject")
-        ){
-          val = `<b>${escapeHtml(String(val))}</b>`;
-        } else {
-          val = escapeHtml(String(val));
-        }
-        tr.innerHTML += `<td>${val}</td>`;
-      });
+    if(col === "UID" || col === "Timestamp") return; // skip these fields
+    let val = row[col] || "";
+    if(
+      (sheet === "Vessel_Join" && col === "Vessel") ||
+      (sheet === "Arrivals" && col === "Vessel") ||
+      (sheet === "Updates" && col === "Title") ||
+      (sheet === "Memo" && col === "Title") ||
+      (sheet === "Training" && col === "Subject") ||
+      (sheet === "Pni" && col === "Subject")
+    ){
+      val = `<b>${escapeHtml(String(val))}</b>`;
+    } else {
+      val = escapeHtml(String(val));
+    }
+    tr.innerHTML += `<td>${val}</td>`;
+});
 
       const uidSafe = row.UID || "";
       tr.innerHTML += `<td>

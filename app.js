@@ -10,6 +10,43 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxoLIrNGnPkxfwoZhzNqnqu
 // Current item being edited
 let currentEdit = { sheet: null, uid: null, row: null };
 
+async function loginUser() {
+  const username = document.getElementById("login-username").value.trim();
+  const password = document.getElementById("login-password").value.trim();
+  const errorDiv = document.getElementById("login-error");
+
+  if (!username || !password) {
+    errorDiv.textContent = "Username and password required";
+    return;
+  }
+
+  try {
+    const params = new URLSearchParams({ sheet: "Users", action: "get" });
+    const users = await apiFetch(params);
+
+    const user = users.find(u => u.Username === username && u.Password === password);
+    if (!user) {
+      errorDiv.textContent = "Invalid username or password";
+      return;
+    }
+
+    // Hide login overlay
+    document.getElementById("login-overlay").style.display = "none";
+
+    // Optionally store user info
+    window.currentUser = user;
+
+    // Load all tables after login
+    ["Vessel_Join","Arrivals","Updates","Memo","Training","Pni","Chatboard"].forEach(sheet => {
+      loadTable(sheet, mapSheetToContainer(sheet), getColumnsForSheet(sheet));
+    });
+
+  } catch (err) {
+    console.error("loginUser error", err);
+    errorDiv.textContent = "Login failed: " + err.message;
+  }
+}
+
 /* ---------------- Helper Functions ---------------- */
 
 // Map sheet names to HTML container IDs

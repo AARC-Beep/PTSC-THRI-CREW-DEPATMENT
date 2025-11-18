@@ -10,43 +10,6 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxoLIrNGnPkxfwoZhzNqnqu
 // Current item being edited
 let currentEdit = { sheet: null, uid: null, row: null };
 
-async function loginUser() {
-  const username = document.getElementById("login-username").value.trim();
-  const password = document.getElementById("login-password").value.trim();
-  const errorDiv = document.getElementById("login-error");
-
-  if (!username || !password) {
-    errorDiv.textContent = "Username and password required";
-    return;
-  }
-
-  try {
-    const params = new URLSearchParams({ sheet: "Users", action: "get" });
-    const users = await apiFetch(params);
-
-    const user = users.find(u => u.Username === username && u.Password === password);
-    if (!user) {
-      errorDiv.textContent = "Invalid username or password";
-      return;
-    }
-
-    // Hide login overlay
-    document.getElementById("login-overlay").style.display = "none";
-
-    // Optionally store user info
-    window.currentUser = user;
-
-    // Load all tables after login
-    ["Vessel_Join","Arrivals","Updates","Memo","Training","Pni","Chatboard"].forEach(sheet => {
-      loadTable(sheet, mapSheetToContainer(sheet), getColumnsForSheet(sheet));
-    });
-
-  } catch (err) {
-    console.error("loginUser error", err);
-    errorDiv.textContent = "Login failed: " + err.message;
-  }
-}
-
 /* ---------------- Helper Functions ---------------- */
 
 // Map sheet names to HTML container IDs
@@ -266,3 +229,37 @@ async function generateMonthlyPDF(sheetName){
   doc.autoTable({ head: [columns], body: rows });
   doc.save(`${sheetName}_Monthly.pdf`);
 }
+/* -------------------- LOGIN -------------------- */
+async function loginUser(){
+  const u = qs("login-username")?.value?.trim() || "";
+  const p = qs("login-password")?.value?.trim() || "";
+  const err = qs("login-error");
+  if(err) err.innerText = "";
+
+  if(!u || !p){ if(err) err.innerText = "Enter username and password"; return; }
+
+  try{
+    const users = await apiFetch(new URLSearchParams({ sheet: "Users", action: "get" }));
+    const match = (users || []).find(x => String(x.Username||"").toLowerCase() === u.toLowerCase() && String(x.Password||"") === p);
+    if(!match){ if(err) err.innerText = "Invalid username or password"; return; }
+
+    sessionStorage.setItem("loggedInUser", match.Username);
+    sessionStorage.setItem("userRole", match.Role || "");
+    qs("login-overlay").style.display = "none";
+    showTab("dashboard");
+    await initReload();
+  }catch(e){
+    if(err) err.innerText = "Login failed: " + e.message;
+    debugLog("loginUser error:", e);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if(sessionStorage.getItem("loggedInUser")){
+    qs("login-overlay").style.display = "none";
+    showTab("dashboard");
+    initReload();
+  } else {
+    qs("login-overlay").style.display = "flex";
+  }
+});

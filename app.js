@@ -307,8 +307,80 @@ async function addRowAndReload(sheet, fields, containerId, columns){
   }catch(e){ alert("Add failed: "+e.message); debugLog("addRowAndReload error", e); }
 }
 
-/* -------------------- EDIT / DELETE -------------------- */
-// similar logic as your previous code (openEditModal, submitEdit, deleteRowConfirm, deleteRow)
+/* --------------------- EDIT --------------------- */
+let currentEdit = { sheet: null, uid: null, row: null };
+
+async function openEditModal(sheet, uid){
+  debugLog("DEBUG → openEditModal:", sheet, uid);
+  if(!uid){ alert("Cannot edit: UID missing"); return; }
+  try{
+    const item = await apiFetch(new URLSearchParams({ sheet, action: "getItem", UID: uid }));
+    if(!item){ alert("Item not found"); return; }
+    currentEdit = { sheet, uid, row: item };
+
+    let html = `<h5>Edit ${escapeHtml(sheet)}</h5>`;
+    for(const k in item){
+      if(k === "UID" || k === "Timestamp") continue;
+      const val = escapeHtml(String(item[k] || ""));
+      const inputId = makeId(k, "edit-");
+      if(k.toLowerCase().includes("details") || k.toLowerCase().includes("message")){
+        html += `<label>${escapeHtml(k)}</label><textarea id="${inputId}" class="form-control mb-2">${val}</textarea>`;
+      } else if(k.toLowerCase().includes("date")){
+        const v = val ? (new Date(val)).toISOString().slice(0,10) : "";
+        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${v}">`;
+      } else {
+        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" class="form-control mb-2" value="${val}">`;
+      }
+    }
+    html += `<div class="mt-2">
+               <button type="button" class="btn btn-primary" onclick="submitEdit()">Save</button>
+               <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+             </div>`;
+    showModal(html);
+  }catch(err){
+    alert("Error loading item: " + err.message);
+    debugLog("openEditModal error", err);
+  }
+}
+
+async function submitEdit(){
+  if(!currentEdit.uid || !currentEdit.sheet){ alert("Cannot save: UID or sheet missing"); return; }
+  try{
+    const p = new URLSearchParams({ sheet: currentEdit.sheet, action: "update", UID: currentEdit.uid });
+    for(const k in currentEdit.row){
+      if(k === "UID" || k === "Timestamp") continue;
+      const el = qs(makeId(k, "edit-"));
+      if(el) p.set(k, el.value);
+    }
+    await apiFetch(p);
+    alert("Updated successfully");
+    closeModal();
+    await loadTable(currentEdit.sheet, mapSheetToContainer(currentEdit.sheet), getColumnsForSheet(currentEdit.sheet));
+    await loadDashboard();
+  }catch(err){
+    alert("Update failed: " + err.message);
+    debugLog("submitEdit error", err);
+  }
+}
+
+/* --------------------- DELETE --------------------- */
+function deleteRowConfirm(sheet, uid){
+  if(!uid){ alert("Cannot delete: UID missing"); return; }
+  if(!confirm("Delete this item? It will be moved to Archive.")) return;
+  deleteRow(sheet, uid);
+}
+
+async function deleteRow(sheet, uid){
+  try{
+    await apiFetch(new URLSearchParams({ sheet, action: "delete", UID: uid }));
+    alert("Deleted");
+    await loadTable(sheet, mapSheetToContainer(sheet), getColumnsForSheet(sheet));
+    await loadDashboard();
+  }catch(err){
+    alert("Delete failed: " + err.message);
+    debugLog("deleteRow error", err);
+  }
+}
 
 /* -------------------- CHAT -------------------- */
 async function loadChat(){

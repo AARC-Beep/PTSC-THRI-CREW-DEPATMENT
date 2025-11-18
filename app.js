@@ -395,22 +395,31 @@ function closeModal() {
 }
 
 /* --------------------- DELETE --------------------- */
-function deleteRowConfirm(sheet, uid){
-  if(!uid){ alert("Cannot delete: UID missing"); return; }
-  if(!confirm("Delete this item? It will be moved to Archive.")) return;
-  deleteRow(sheet, uid);
-}
+function deleteItem(sh, uid){
+  if(!uid) throw new Error("Missing UID");
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-async function deleteRow(sheet, uid){
-  try{
-    await apiFetch(new URLSearchParams({ sheet, action: "delete", UID: uid }));
-    alert("Deleted");
-    await loadTable(sheet, mapSheetToContainer(sheet), getColumnsForSheet(sheet));
-    await loadDashboard();
-  }catch(err){
-    alert("Delete failed: " + err.message);
-    debugLog("deleteRow error", err);
+  // Auto-create Archive sheet if missing
+  let archive = ss.getSheetByName("Archive");
+  if(!archive){
+    archive = ss.insertSheet("Archive");
+    // Optionally, copy headers from original sheet
+    const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+    archive.appendRow(headers);
   }
+
+  const data = sh.getDataRange().getValues();
+  const headers = data[0];
+  const uidIndex = headers.indexOf("UID");
+
+  for(let i=1;i<data.length;i++){
+    if(String(data[i][uidIndex]) === String(uid)){
+      archive.appendRow(data[i]);
+      sh.deleteRow(i+1);
+      return "Deleted";
+    }
+  }
+  throw new Error("UID not found for deletion");
 }
 
 /* -------------------- CHAT -------------------- */

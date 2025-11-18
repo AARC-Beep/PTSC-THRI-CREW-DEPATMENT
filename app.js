@@ -128,27 +128,51 @@ async function loadDashboard(){
 }
 
 /* -------------------- TABLES -------------------- */
-async function loadAllData(){
+async function loadAllData() {
   const sheets = [
-    ["Vessel_Join","crew-join-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]],
-    ["Arrivals","crew-arrivals-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]],
-    ["Updates","daily-updates-data", ["Title","Details","Date",]],
-    ["Memo","memo-data", ["Title","Details","Date"]],
-    ["Training","training-data", ["Subject","Details","Date"]],
-    ["Pni","pni-data", ["Subject","Details","Date"]]
+    ["Vessel_Join", "crew-join-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"]],
+    ["Arrivals", "crew-arrivals-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"]],
+    ["Updates", "daily-updates-data", ["Title", "Details", "Date"]],
+    ["Memo", "memo-data", ["Title", "Details", "Date"]],
+    ["Training", "training-data", ["Subject", "Details", "Date"]],
+    ["Pni", "pni-data", ["Subject", "Details", "Date"]]
   ];
 
-  await Promise.all(sheets.map(s=>loadTable(...s)));
-  await loadChat();
+  const loadPromises = sheets.map(async ([sheetName, containerId, columns]) => {
+    try {
+      await loadTable(sheetName, containerId, columns);
+    } catch (err) {
+      console.error(`Failed to load sheet "${sheetName}":`, err);
+      const container = document.getElementById(containerId);
+      if (container) container.innerHTML = `<p>Error loading ${sheetName}</p>`;
+    }
+  });
+
+  await Promise.all(loadPromises);
+
+  // Load chat after all tables
+  try {
+    await loadChat();
+  } catch (err) {
+    console.error("Failed to load chat:", err);
+    const chatContainer = document.getElementById("chat-container");
+    if (chatContainer) chatContainer.innerHTML = "<p>Error loading chat.</p>";
+  }
 }
 
 async function loadTable(sheetName, containerId, columns) {
-  try {
-    const container = document.getElementById(containerId);
-    container.innerHTML = ""; // clear previous content
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.warn(`Container with ID "${containerId}" not found.`);
+    return;
+  }
 
-    // Fetch data from backend
+  container.innerHTML = "<p>Loading data...</p>";
+
+  try {
     const data = await apiFetch(new URLSearchParams({ sheet: sheetName, action: "get" }));
+    container.innerHTML = ""; // clear loading message
+
     if (!data || data.length === 0) {
       container.innerHTML = "<p>No data available.</p>";
       return;
@@ -164,36 +188,57 @@ async function loadTable(sheetName, containerId, columns) {
     columns.forEach(col => {
       const th = document.createElement("th");
       th.textContent = col;
+      th.scope = "col";
       headerRow.appendChild(th);
     });
-    headerRow.appendChild(document.createElement("th")).textContent = "Actions"; // extra Actions column
+
+    const actionTh = document.createElement("th");
+    actionTh.textContent = "Actions";
+    actionTh.scope = "col";
+    headerRow.appendChild(actionTh);
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
     // Table body
     const tbody = document.createElement("tbody");
+
     data.forEach(item => {
       const tr = document.createElement("tr");
+
       columns.forEach(col => {
         const td = document.createElement("td");
         td.textContent = item[col] || "";
         tr.appendChild(td);
       });
 
-      // Actions: Edit + Delete
+      // Actions column
       const actionTd = document.createElement("td");
-      actionTd.innerHTML = `
-        <button class="btn btn-sm btn-primary me-1" onclick="openEditModal('${sheetName}','${item.UID}')">Edit</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteRowConfirm('${sheetName}','${item.UID}')">Delete</button>
-      `;
+
+      // Edit button
+      const editBtn = document.createElement("button");
+      editBtn.className = "btn btn-sm btn-primary me-1";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener("click", () => openEditModal(sheetName, item.UID));
+
+      // Delete button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "btn btn-sm btn-danger";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", () => deleteRowConfirm(sheetName, item.UID));
+
+      actionTd.appendChild(editBtn);
+      actionTd.appendChild(deleteBtn);
       tr.appendChild(actionTd);
+
       tbody.appendChild(tr);
     });
 
     table.appendChild(tbody);
     container.appendChild(table);
+
   } catch (err) {
     console.error("loadTable error:", err);
+    container.innerHTML = "<p>Error loading table.</p>";
     showModal("Error loading table: " + err.message);
   }
 }

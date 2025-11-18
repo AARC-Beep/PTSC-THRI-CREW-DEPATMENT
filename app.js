@@ -405,52 +405,25 @@ function closeModal() {
 }
 
 /* --------------------- DELETE --------------------- */
-function deleteItem(sh, uid){
-  if(!uid) throw new Error("Missing UID");
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // Auto-create Archive sheet if missing
-  let archive = ss.getSheetByName("Archive");
-  if(!archive){
-    archive = ss.insertSheet("Archive");
-    // Optionally, copy headers from original sheet
-    const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
-    archive.appendRow(headers);
-  }
-
-  const data = sh.getDataRange().getValues();
-  const headers = data[0];
-  const uidIndex = headers.indexOf("UID");
-
-  for(let i=1;i<data.length;i++){
-    if(String(data[i][uidIndex]) === String(uid)){
-      archive.appendRow(data[i]);
-      sh.deleteRow(i+1);
-      return "Deleted";
-    }
-  }
-  throw new Error("UID not found for deletion");
-}
-// Confirm deletion and call backend
-function deleteRowConfirm(sheetName, uid) {
+async function deleteRowConfirm(sheetName, uid) {
   if (!uid || !sheetName) {
     alert("Cannot delete: missing UID or sheet");
     return;
   }
 
-  const confirmDelete = confirm("Are you sure you want to delete this row?");
-  if (confirmDelete) {
-    google.script.run
-      .withSuccessHandler(() => {
-        alert("Deleted successfully");
-        // Refresh the table after deletion
-        loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));
-      })
-      .withFailureHandler(err => {
-        alert("Delete failed: " + err.message);
-        console.error("deleteRowConfirm error", err);
-      })
-      .deleteItemByUID(sheetName, uid); // backend call
+  if (!confirm("Are you sure you want to delete this row?")) return;
+
+  try {
+    const params = new URLSearchParams({ sheet: sheetName, action: "delete", UID: uid });
+    const res = await fetch(`${GAS_URL}?${params.toString()}`);
+    if (!res.ok) throw new Error("Network response was not ok");
+    const text = await res.text();
+    alert(text); // "Deleted" or error message
+    // Reload table after deletion
+    loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));
+  } catch (err) {
+    alert("Delete failed: " + err.message);
+    console.error("deleteRowConfirm error", err);
   }
 }
 

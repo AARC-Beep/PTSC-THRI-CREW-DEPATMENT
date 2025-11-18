@@ -1,6 +1,6 @@
 /* ============================================================
    PTSC / THRI Crew Dashboard - Full JS
-   Supports: get, getItem, add, update, delete, chat, PDF
+   Supports: get, getItem, add, update, delete (archive), chat, PDF
 ============================================================= */
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxoLIrNGnPkxfwoZhzNqnquDbDLoKnqmkSpU-ET6wlq1lA-pQemm88dqyNbsJnl7Lem/exec";
@@ -37,6 +37,7 @@ async function apiFetch(params){
   const res = await fetch(url);
   if(!res.ok) throw new Error("Network error: " + res.status);
   const j = await res.json();
+  // your backend returns { status: "success", data: ... } or { status:"error", message: ... }
   if(j.status && j.status !== "success") throw new Error(j.message || "API error");
   return j.data === undefined ? j : j.data;
 }
@@ -130,12 +131,12 @@ async function loadDashboard(){
 /* -------------------- TABLES -------------------- */
 async function loadAllData() {
   const sheets = [
-    ["Vessel_Join", "crew-join-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"]],
-    ["Arrivals", "crew-arrivals-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"]],
-    ["Updates", "daily-updates-data", ["Title", "Details", "Date"]],
-    ["Memo", "memo-data", ["Title", "Details", "Date"]],
-    ["Training", "training-data", ["Subject", "Details", "Date"]],
-    ["Pni", "pni-data", ["Subject", "Details", "Date"]]
+    ["Vessel_Join", "crew-join-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight", "UID"]],
+    ["Arrivals", "crew-arrivals-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight", "UID"]],
+    ["Updates", "daily-updates-data", ["Title", "Details", "Date", "UID"]],
+    ["Memo", "memo-data", ["Title", "Details", "Date", "UID"]],
+    ["Training", "training-data", ["Subject", "Details", "Date", "UID"]],
+    ["Pni", "pni-data", ["Subject", "Details", "Date", "UID"]]
   ];
 
   const loadPromises = sheets.map(async ([sheetName, containerId, columns]) => {
@@ -220,10 +221,10 @@ async function loadTable(sheetName, containerId, columns) {
       editBtn.textContent = "Edit";
       editBtn.addEventListener("click", () => openEditModal(sheetName, item.UID));
 
-      // Delete button
+      // Archive button (previously Delete)
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "btn btn-sm btn-danger";
-      deleteBtn.textContent = "Delete";
+      deleteBtn.textContent = "Archive";
       deleteBtn.addEventListener("click", () => deleteRowConfirm(sheetName, item.UID));
 
       actionTd.appendChild(editBtn);
@@ -423,7 +424,32 @@ async function submitEdit(){
   }
 }
 
-// Add this once anywhere in app.js
+// small helpers for reload after update
+function mapSheetToContainer(sheet){
+  const map = {
+    "Vessel_Join":"crew-join-data",
+    "Arrivals":"crew-arrivals-data",
+    "Updates":"daily-updates-data",
+    "Memo":"memo-data",
+    "Training":"training-data",
+    "Pni":"pni-data"
+  };
+  return map[sheet] || "";
+}
+
+function getColumnsForSheet(sheet){
+  const map = {
+    "Vessel_Join": ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight", "UID"],
+    "Arrivals": ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight", "UID"],
+    "Updates": ["Title", "Details", "Date", "UID"],
+    "Memo": ["Title", "Details", "Date", "UID"],
+    "Training": ["Subject", "Details", "Date", "UID"],
+    "Pni": ["Subject", "Details", "Date", "UID"]
+  };
+  return map[sheet] || [];
+}
+
+// modal helpers
 function showModal(content) {
   const existing = document.getElementById("customModal");
   if(existing) existing.remove();
@@ -454,37 +480,20 @@ function closeModal() {
   if(modal) modal.remove();
 }
 
-/* --------------------- DELETE --------------------- */
-function deleteItemByUID(sheetName, uid) {
-  if (!sheetName || !uid) throw new Error("Missing sheet name or UID");
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(sheetName);
-  if (!sheet) throw new Error("Sheet not found: " + sheetName);
-
-  // Try to get Archive sheet
-  let archive = ss.getSheetByName("Archive");
-
-  // Auto-create Archive if missing
-  if (!archive) {
-    archive = ss.insertSheet("Archive");
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    archive.appendRow(headers); // append headers
+/* --------------------- DELETE / ARCHIVE (client) --------------------- */
+async function deleteRowConfirm(sheetName, uid) {
+  if (!confirm("Are you sure you want to archive this row?")) return;
+  try {
+    const params = new URLSearchParams({ sheet: sheetName, action: "delete", UID: uid });
+    const res = await apiFetch(params);
+    // backend returns "Deleted" or similar; we check for success by not throwing
+    alert("Row archived successfully");
+    await loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));
+    await loadDashboard();
+  } catch (err) {
+    console.error("deleteRowConfirm error:", err);
+    alert("Failed to archive row: " + err.message);
   }
-
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const uidIndex = headers.indexOf("UID");
-
-  for (let i = 1; i < data.length; i++) {
-    if (String(data[i][uidIndex]) === String(uid)) {
-      archive.appendRow(data[i]);
-      sheet.deleteRow(i + 1);
-      return "Deleted";
-    }
-  }
-
-  throw new Error("UID not found for deletion");
 }
 
 /* -------------------- CHAT -------------------- */

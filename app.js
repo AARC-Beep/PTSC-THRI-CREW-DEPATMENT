@@ -5,7 +5,7 @@
 ============================================================ */
 
 // Your deployed Web App URL
-const GAS_URL = "https://script.google.com/macros/s/YOUR_DEPLOYED_URL/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxoLIrNGnPkxfwoZhzNqnquDbDLoKnqmkSpU-ET6wlq1lA-pQemm88dqyNbsJnl7Lem/exec";
 
 // Current item being edited
 let currentEdit = { sheet: null, uid: null, row: null };

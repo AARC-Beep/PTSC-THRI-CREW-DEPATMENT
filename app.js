@@ -19,7 +19,12 @@ function shortDate(v){
   if(!v) return "";
   const d = new Date(v);
   if(isNaN(d)) return String(v);
-  return d.toLocaleDateString();
+
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+
+  return `${yyyy}-${mm}-${dd}`;  // always YYYY-MM-DD
 }
 
 function makeId(name, prefix="edit-"){

@@ -125,12 +125,12 @@ async function loadDashboard(){
 /* -------------------- TABLES -------------------- */
 async function loadAllData(){
   const sheets = [
-    ["Vessel_Join","crew-join-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"]],
-    ["Arrivals","crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"]],
-    ["Updates","daily-updates-data", ["Timestamp","Title","Details","Date","UID"]],
-    ["Memo","memo-data", ["Timestamp","Title","Details","Date","UID"]],
-    ["Training","training-data", ["Timestamp","Subject","Details","Date","UID"]],
-    ["Pni","pni-data", ["Timestamp","Subject","Details","Date","UID"]]
+    ["Vessel_Join","crew-join-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]],
+    ["Arrivals","crew-arrivals-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]],
+    ["Updates","daily-updates-data", ["Title","Details","Date",]],
+    ["Memo","memo-data", ["Title","Details","Date"]],
+    ["Training","training-data", ["Subject","Details","Date"]],
+    ["Pni","pni-data", ["Subject","Details","Date"]]
   ];
 
   await Promise.all(sheets.map(s=>loadTable(...s)));

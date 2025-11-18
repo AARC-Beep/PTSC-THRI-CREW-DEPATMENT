@@ -229,40 +229,47 @@ async function generateMonthlyPDF(sheetName){
   doc.autoTable({ head: [columns], body: rows });
   doc.save(`${sheetName}_Monthly.pdf`);
 }
+
 /* -------------------- LOGIN -------------------- */
 async function loginUser() {
-  const username = document.getElementById("login-username").value.trim();
-  const password = document.getElementById("login-password").value.trim();
-  const errorDiv = document.getElementById("login-error");
-
-  if (!username || !password) {
-    errorDiv.textContent = "Username and password required";
-    return;
-  }
-
   try {
-    const params = new URLSearchParams({ sheet: "Users", action: "get" });
-    const users = await apiFetch(params);
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value.trim();
 
-    const user = users.find(u => u.Username === username && u.Password === password);
-    if (!user) {
-      errorDiv.textContent = "Invalid username or password";
-      return;
+    const params = {
+      action: "get",
+      sheet: "Users"
+    };
+
+    const res = await apiFetch(params);
+
+    // IMPORTANT FIX HERE:
+    const users = Array.isArray(res)
+      ? res
+      : (res.data && Array.isArray(res.data) ? res.data : []);
+
+    if (users.length === 0) {
+      throw new Error("Users data not valid");
     }
 
-    // Hide login overlay
+    const user = users.find(
+      u => String(u.Username).trim() === username && String(u.Password).trim() === password
+    );
+
+    if (!user) {
+      throw new Error("Invalid username or password");
+    }
+
+    // Success
     document.getElementById("login-overlay").style.display = "none";
 
-    // Optionally store user info
-    window.currentUser = user;
+    // Save UID if needed
+    localStorage.setItem("uid", user.UID);
 
-    // Load tables
-    ["Vessel_Join","Arrivals","Updates","Memo","Training","Pni","Chatboard"].forEach(sheet => {
-      loadTable(sheet, mapSheetToContainer(sheet), getColumnsForSheet(sheet));
-    });
+    loadDefaultTable(); // or loadTable("Vessel_Join") – whatever your default is
 
   } catch (err) {
-    console.error("loginUser error", err);
-    errorDiv.textContent = "Login failed: " + err.message;
+    console.error("loginUser error:", err);
+    alert("Login failed: " + err.message);
   }
 }

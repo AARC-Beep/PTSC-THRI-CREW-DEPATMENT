@@ -405,26 +405,36 @@ function closeModal() {
 }
 
 /* --------------------- DELETE --------------------- */
-async function deleteRowConfirm(sheetName, uid) {
-  if (!uid || !sheetName) {
-    alert("Cannot delete: missing UID or sheet");
-    return;
+function deleteItemByUID(sheetName, uid) {
+  if (!sheetName || !uid) throw new Error("Missing sheet name or UID");
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) throw new Error("Sheet not found: " + sheetName);
+
+  // Try to get Archive sheet
+  let archive = ss.getSheetByName("Archive");
+
+  // Auto-create Archive if missing
+  if (!archive) {
+    archive = ss.insertSheet("Archive");
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    archive.appendRow(headers); // append headers
   }
 
-  if (!confirm("Are you sure you want to delete this row?")) return;
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const uidIndex = headers.indexOf("UID");
 
-  try {
-    const params = new URLSearchParams({ sheet: sheetName, action: "delete", UID: uid });
-    const res = await fetch(`${GAS_URL}?${params.toString()}`);
-    if (!res.ok) throw new Error("Network response was not ok");
-    const text = await res.text();
-    alert(text); // "Deleted" or error message
-    // Reload table after deletion
-    loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));
-  } catch (err) {
-    alert("Delete failed: " + err.message);
-    console.error("deleteRowConfirm error", err);
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][uidIndex]) === String(uid)) {
+      archive.appendRow(data[i]);
+      sheet.deleteRow(i + 1);
+      return "Deleted";
+    }
   }
+
+  throw new Error("UID not found for deletion");
 }
 
 /* -------------------- CHAT -------------------- */

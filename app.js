@@ -137,49 +137,59 @@ async function loadAllData(){
   await loadChat();
 }
 
-async function loadTable(sheet, containerId, columns){
-  const div = qs(containerId);
-  if(!div) return;
-  div.innerHTML = "<div>Loading...</div>";
-  try{
-    const data = await apiFetch(new URLSearchParams({ sheet, action: "get" })).catch(()=>[]);
-    if(!data.length){ div.innerHTML="<small>No records</small>"; return; }
+async function loadTable(sheetName, containerId, columns) {
+  try {
+    const container = document.getElementById(containerId);
+    container.innerHTML = ""; // clear previous content
 
+    // Fetch data from backend
+    const data = await apiFetch(new URLSearchParams({ sheet: sheetName, action: "get" }));
+    if (!data || data.length === 0) {
+      container.innerHTML = "<p>No data available.</p>";
+      return;
+    }
+
+    // Create table
     const table = document.createElement("table");
-    table.className = "table table-sm table-bordered";
+    table.className = "table table-striped table-bordered";
+
+    // Table header
     const thead = document.createElement("thead");
-    thead.innerHTML = `<tr>${columns.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}<th>Actions</th></tr>`;
+    const headerRow = document.createElement("tr");
+    columns.forEach(col => {
+      const th = document.createElement("th");
+      th.textContent = col;
+      headerRow.appendChild(th);
+    });
+    headerRow.appendChild(document.createElement("th")).textContent = "Actions"; // extra Actions column
+    thead.appendChild(headerRow);
     table.appendChild(thead);
 
+    // Table body
     const tbody = document.createElement("tbody");
-    data.slice().reverse().forEach(row=>{
+    data.forEach(item => {
       const tr = document.createElement("tr");
-      columns.forEach(col=>{
-        let val = row[col] || "";
-        if(
-          (sheet==="Vessel_Join" && col==="Vessel") ||
-          (sheet==="Arrivals" && col==="Vessel") ||
-          (sheet==="Updates" && col==="Title") ||
-          (sheet==="Memo" && col==="Title") ||
-          (sheet==="Training" && col==="Subject") ||
-          (sheet==="Pni" && col==="Subject")
-        ){ val = `<b>${escapeHtml(val)}</b>`; } 
-        else val = escapeHtml(val);
-        tr.innerHTML += `<td>${val}</td>`;
+      columns.forEach(col => {
+        const td = document.createElement("td");
+        td.textContent = item[col] || "";
+        tr.appendChild(td);
       });
-      const uidSafe = row.UID || "";
-      tr.innerHTML += `<td>
-        <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${sheet}','${uidSafe}')">Edit</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="deleteRowConfirm('${sheet}','${uidSafe}')">Delete</button>
-      </td>`;
+
+      // Actions: Edit + Delete
+      const actionTd = document.createElement("td");
+      actionTd.innerHTML = `
+        <button class="btn btn-sm btn-primary me-1" onclick="openEditModal('${sheetName}','${item.UID}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteRowConfirm('${sheetName}','${item.UID}')">Delete</button>
+      `;
+      tr.appendChild(actionTd);
       tbody.appendChild(tr);
     });
+
     table.appendChild(tbody);
-    div.innerHTML = "";
-    div.appendChild(table);
-  }catch(err){
-    div.innerHTML="<small>Failed to load table</small>";
-    debugLog("loadTable error", sheet, err);
+    container.appendChild(table);
+  } catch (err) {
+    console.error("loadTable error:", err);
+    showModal("Error loading table: " + err.message);
   }
 }
 

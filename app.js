@@ -421,6 +421,28 @@ function deleteItem(sh, uid){
   }
   throw new Error("UID not found for deletion");
 }
+// Confirm deletion and call backend
+function deleteRowConfirm(sheetName, uid) {
+  if (!uid || !sheetName) {
+    alert("Cannot delete: missing UID or sheet");
+    return;
+  }
+
+  const confirmDelete = confirm("Are you sure you want to delete this row?");
+  if (confirmDelete) {
+    google.script.run
+      .withSuccessHandler(() => {
+        alert("Deleted successfully");
+        // Refresh the table after deletion
+        loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));
+      })
+      .withFailureHandler(err => {
+        alert("Delete failed: " + err.message);
+        console.error("deleteRowConfirm error", err);
+      })
+      .deleteItemByUID(sheetName, uid); // backend call
+  }
+}
 
 /* -------------------- CHAT -------------------- */
 async function loadChat(){

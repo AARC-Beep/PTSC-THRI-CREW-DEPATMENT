@@ -335,4 +335,12 @@ async function sendMessage(){
   try{
     await apiFetch(new URLSearchParams({ sheet:"Chatboard", action:"chat", Name:sessionStorage.getItem("loggedInUser")||"User", Message:msg }));
     input.value="";
-    await
+    await loadChat();
+  }catch(e){ alert("Failed to send chat: "+e.message); }
+}
+
+/* -------------------- INIT -------------------- */
+async function initReload(){
+  await loadDashboard();
+  await loadAllData();
+}

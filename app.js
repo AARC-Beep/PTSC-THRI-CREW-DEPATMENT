@@ -363,6 +363,37 @@ async function submitEdit(){
   }
 }
 
+// Add this once anywhere in app.js
+function showModal(content) {
+  const existing = document.getElementById("customModal");
+  if(existing) existing.remove();
+  const modal = document.createElement("div");
+  modal.id = "customModal";
+  modal.style.position = "fixed";
+  modal.style.top = "0";
+  modal.style.left = "0";
+  modal.style.width = "100%";
+  modal.style.height = "100%";
+  modal.style.backgroundColor = "rgba(0,0,0,0.5)";
+  modal.style.display = "flex";
+  modal.style.justifyContent = "center";
+  modal.style.alignItems = "center";
+  modal.style.zIndex = "9999";
+  const box = document.createElement("div");
+  box.style.backgroundColor = "#fff";
+  box.style.padding = "20px";
+  box.style.borderRadius = "8px";
+  box.style.minWidth = "300px";
+  box.innerHTML = content;
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+}
+
+function closeModal() {
+  const modal = document.getElementById("customModal");
+  if(modal) modal.remove();
+}
+
 /* --------------------- DELETE --------------------- */
 function deleteRowConfirm(sheet, uid){
   if(!uid){ alert("Cannot delete: UID missing"); return; }

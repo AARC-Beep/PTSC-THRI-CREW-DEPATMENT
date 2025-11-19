@@ -482,7 +482,18 @@ async function handleAddVesselJoin(){
     Port: qs("vj-port")?.value||"",
     "No. of Crew": qs("vj-crew")?.value||"",
     Rank: qs("vj-rank")?.value||"",
-    Date: qs("vj-date")?.value||"",
+   const raw = qs("vj-date").value;   // this is YYYY-MM-DD
+let formattedDate = "";
+
+if (raw) {
+  const d = new Date(raw + "T00:00:00");  
+  formattedDate = d.toLocaleDateString("en-US", { 
+    year: "numeric", 
+    month: "short", 
+    day: "numeric" 
+  });
+}
+,
     Flight: qs("vj-flight")?.value||""
   };
   await addRowAndReload("Vessel_Join", fields, "crew-join-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
@@ -495,16 +506,71 @@ async function handleAddArrivals(){
     Port: qs("av-port")?.value||"",
     "No. of Crew": qs("av-crew")?.value||"",
     Rank: qs("av-rank")?.value||"",
-    Date: qs("av-date")?.value||"",
+   const raw = qs("av-date").value;   // this is YYYY-MM-DD
+let formattedDate = "";
+
+if (raw) {
+  const d = new Date(raw + "T00:00:00");  
+  formattedDate = d.toLocaleDateString("en-US", { 
+    year: "numeric", 
+    month: "short", 
+    day: "numeric" 
+  });
+}
+
     Flight: qs("av-flight")?.value||""
   };
   await addRowAndReload("Arrivals", fields, "crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
 }
 
-async function handleAddUpdate(){ await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", Date:qs("up-date")?.value||""},"daily-updates-data",["Timestamp","Title","Details","Date"]); }
-async function handleAddMemo(){ await addRowAndReload("Memo",{Title:qs("memo-title")?.value||"", Details:qs("memo-details")?.value||"", Date:qs("memo-date")?.value||""},"memo-data",["Timestamp","Title","Details","Date"]); }
-async function handleAddTraining(){ await addRowAndReload("Training",{Subject:qs("tr-subject")?.value||"", Details:qs("tr-details")?.value||"", Date:qs("tr-date")?.value||""},"training-data",["Timestamp","Subject","Details","Date"]); }
-async function handleAddPni(){ await addRowAndReload("Pni",{Subject:qs("pn-subject")?.value||"", Details:qs("pn-details")?.value||"", Date:qs("pn-date")?.value||""},"pni-data",["Timestamp","Subject","Details","Date"]); }
+async function handleAddUpdate(){ await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", const raw = qs("up-date").value;   // this is YYYY-MM-DD
+let formattedDate = "";
+
+if (raw) {
+  const d = new Date(raw + "T00:00:00");  
+  formattedDate = d.toLocaleDateString("en-US", { 
+    year: "numeric", 
+    month: "short", 
+    day: "numeric" 
+  });
+}
+,"daily-updates-data",["Timestamp","Title","Details","Date"]); }
+async function handleAddMemo(){ await addRowAndReload("Memo",{Title:qs("memo-title")?.value||"", Details:qs("memo-details")?.value||"",const raw = qs("memo-date").value;   // this is YYYY-MM-DD
+let formattedDate = "";
+
+if (raw) {
+  const d = new Date(raw + "T00:00:00");  
+  formattedDate = d.toLocaleDateString("en-US", { 
+    year: "numeric", 
+    month: "short", 
+    day: "numeric" 
+  });
+}
+,"memo-data",["Timestamp","Title","Details","Date"]); }
+async function handleAddTraining(){ await addRowAndReload("Training",{Subject:qs("tr-subject")?.value||"", Details:qs("tr-details")?.value||"", const raw = qs("tr-date").value;   // this is YYYY-MM-DD
+let formattedDate = "";
+
+if (raw) {
+  const d = new Date(raw + "T00:00:00");  
+  formattedDate = d.toLocaleDateString("en-US", { 
+    year: "numeric", 
+    month: "short", 
+    day: "numeric" 
+  });
+}
+,"training-data",["Timestamp","Subject","Details","Date"]); }
+async function handleAddPni(){ await addRowAndReload("Pni",{Subject:qs("pn-subject")?.value||"", Details:qs("pn-details")?.value||"", const raw = qs("pn-date").value;   // this is YYYY-MM-DD
+let formattedDate = "";
+
+if (raw) {
+  const d = new Date(raw + "T00:00:00");  
+  formattedDate = d.toLocaleDateString("en-US", { 
+    year: "numeric", 
+    month: "short", 
+    day: "numeric" 
+  });
+}
+,"pni-data",["Timestamp","Subject","Details","Date"]); }
 
 async function addRowAndReload(sheet, fields, containerId, columns){
   try{

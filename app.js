@@ -261,28 +261,20 @@ function getArchiveSheet(sheet){
   return map[sheet] || null;
 }
 
-async function deleteRowConfirm(sheetName, uid){
-  const archiveSheet = getArchiveSheet(sheetName);
-  if(!archiveSheet){
-    alert("Archive sheet missing for "+sheetName);
-    return;
-  }
-  if(!confirm("Are you sure you want to archive this row?")) return;
-
-  try{
-    const params = new URLSearchParams({
+async function deleteRowConfirm(sheetName, uid) {
+  if (!confirm("Are you sure you want to archive this row?")) return;
+  try {
+    const res = await apiFetch(new URLSearchParams({
       sheet: sheetName,
       action: "delete",
-      UID: uid,
-      archiveSheet: archiveSheet
-    });
-    await apiFetch(params);
+      UID: uid
+    }));
     alert("Row archived successfully");
-    await loadTable(sheetName,mapSheetToContainer(sheetName),getColumnsForSheet(sheetName));
+    await loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));
     await loadDashboard();
-  }catch(err){
+  } catch (err) {
+    alert("Failed to archive row: " + err.message);
     console.error("deleteRowConfirm error:", err);
-    alert("Failed to archive row: "+err.message);
   }
 }
 

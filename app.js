@@ -1,5 +1,5 @@
 /* ============================================================
-   PTSC / THRI Crew Dashboard - Full JS
+   PTSC / THRI Crew Dashboard - Full JS (fixed)
    Supports: get, getItem, add, update, delete (archive), chat, PDF
 ============================================================= */
 
@@ -15,6 +15,7 @@ function escapeHtml(unsafe){
   return String(unsafe).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 }
 
+// shortDate kept for places that need YYYY-MM-DD output
 function shortDate(v){
   if(!v) return "";
   const d = new Date(v);
@@ -119,15 +120,13 @@ async function loadDashboard(){
       rows.forEach(r=>{
         const d = document.createElement("div");
         d.className = "card-body";
-        const rawDate = r.Date || r.Timestamp;
-const dObj = new Date(rawDate);
-const dateField = isNaN(dObj)
-  ? ""
-  : dObj.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric"
-    });
+
+        // handle date display: prefer Date field, fallback to Timestamp
+        const rawDate = r.Date || r.Timestamp || "";
+        const dObj = new Date(rawDate);
+        const dateField = isNaN(dObj)
+          ? (rawDate ? String(rawDate) : "")
+          : dObj.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
         const title = r.Vessel || r.Title || r.Subject || "";
         d.innerHTML = `<small>${escapeHtml(dateField)} • <b>${escapeHtml(title)}</b></small>`;
@@ -200,7 +199,18 @@ async function loadTable(sheetName, containerId, columns) {
       const tr = document.createElement("tr");
       columns.forEach(col => {
         const td = document.createElement("td");
-        td.textContent = row[col] || "";
+        const raw = row[col] || "";
+        // if column is a date column, format nicely
+        if (String(col).toLowerCase().includes("date") && raw) {
+          const dObj = new Date(raw);
+          if (!isNaN(dObj)) {
+            td.textContent = dObj.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+          } else {
+            td.textContent = raw;
+          }
+        } else {
+          td.textContent = raw;
+        }
         tr.appendChild(td);
       });
 
@@ -313,22 +323,18 @@ async function openEditModal(sheet, uid){
       if(k.toLowerCase().includes("details") || k.toLowerCase().includes("message")){
         html += `<label>${escapeHtml(k)}</label><textarea id="${inputId}" class="form-control mb-2">${escapeHtml(val)}</textarea>`;
       } else if(k.toLowerCase().includes("date")){
+        // input type="date" must receive YYYY-MM-DD
         let v = "";
         if(val){
-         const raw = qs("vj-date").value;   // this is YYYY-MM-DD
-let formattedDate = "";
-
-if (raw) {
-  const d = new Date(raw + "T00:00:00");  
-  formattedDate = d.toLocaleDateString("en-US", { 
-    year: "numeric", 
-    month: "short", 
-    day: "numeric" 
-  });
-}
-
+          const d = new Date(val);
+          if(!isNaN(d)){
+            v = d.toISOString().slice(0,10); // YYYY-MM-DD
+          } else {
+            // fallback: try to keep original if it already looks like YYYY-MM-DD
+            v = val.length >= 10 ? val.slice(0,10) : "";
+          }
         }
-        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${v}">`;
+        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${escapeHtml(v)}">`;
       } else {
         html += `<label>${escapeHtml(k)}</label><input id="${inputId}" class="form-control mb-2" value="${escapeHtml(val)}">`;
       }
@@ -395,7 +401,7 @@ function closeModal(){ const modal = qs("customModal"); if(modal) modal.remove()
 
 /* -------------------- FORMS & ADD HANDLERS -------------------- */
 function renderForm(type){
-  const today = new Date().toISOString().slice(0,10);
+  const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD for input[type=date]
   switch(type){
     case "join":
       return `<div class="row g-2">
@@ -476,101 +482,56 @@ function toggleForm(id){
 
 /* -------------------- ADD HANDLERS -------------------- */
 async function handleAddVesselJoin(){
+  // read date input as YYYY-MM-DD (browser provides this)
+  const raw = qs("vj-date")?.value || "";
+  const dateToSend = raw; // store as YYYY-MM-DD
   const fields = {
     Vessel: qs("vj-vessel")?.value||"",
     Principal: qs("vj-principal")?.value||"",
     Port: qs("vj-port")?.value||"",
     "No. of Crew": qs("vj-crew")?.value||"",
     Rank: qs("vj-rank")?.value||"",
-   const raw = qs("vj-date").value;   // this is YYYY-MM-DD
-let formattedDate = "";
-
-if (raw) {
-  const d = new Date(raw + "T00:00:00");  
-  formattedDate = d.toLocaleDateString("en-US", { 
-    year: "numeric", 
-    month: "short", 
-    day: "numeric" 
-  });
-}
-,
+    Date: dateToSend,
     Flight: qs("vj-flight")?.value||""
   };
   await addRowAndReload("Vessel_Join", fields, "crew-join-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
 }
 
 async function handleAddArrivals(){
+  const raw = qs("av-date")?.value || "";
+  const dateToSend = raw;
   const fields = {
     Vessel: qs("av-vessel")?.value||"",
     Principal: qs("av-principal")?.value||"",
     Port: qs("av-port")?.value||"",
     "No. of Crew": qs("av-crew")?.value||"",
     Rank: qs("av-rank")?.value||"",
-   const raw = qs("av-date").value;   // this is YYYY-MM-DD
-let formattedDate = "";
-
-if (raw) {
-  const d = new Date(raw + "T00:00:00");  
-  formattedDate = d.toLocaleDateString("en-US", { 
-    year: "numeric", 
-    month: "short", 
-    day: "numeric" 
-  });
-}
-
+    Date: dateToSend,
     Flight: qs("av-flight")?.value||""
   };
   await addRowAndReload("Arrivals", fields, "crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
 }
 
-async function handleAddUpdate(){ await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", const raw = qs("up-date").value;   // this is YYYY-MM-DD
-let formattedDate = "";
-
-if (raw) {
-  const d = new Date(raw + "T00:00:00");  
-  formattedDate = d.toLocaleDateString("en-US", { 
-    year: "numeric", 
-    month: "short", 
-    day: "numeric" 
-  });
+async function handleAddUpdate(){
+  const raw = qs("up-date")?.value || "";
+  const dateToSend = raw;
+  await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", Date: dateToSend },"daily-updates-data",["Timestamp","Title","Details","Date"]);
 }
-,"daily-updates-data",["Timestamp","Title","Details","Date"]); }
-async function handleAddMemo(){ await addRowAndReload("Memo",{Title:qs("memo-title")?.value||"", Details:qs("memo-details")?.value||"",const raw = qs("memo-date").value;   // this is YYYY-MM-DD
-let formattedDate = "";
-
-if (raw) {
-  const d = new Date(raw + "T00:00:00");  
-  formattedDate = d.toLocaleDateString("en-US", { 
-    year: "numeric", 
-    month: "short", 
-    day: "numeric" 
-  });
+async function handleAddMemo(){
+  const raw = qs("memo-date")?.value || "";
+  const dateToSend = raw;
+  await addRowAndReload("Memo",{Title:qs("memo-title")?.value||"", Details:qs("memo-details")?.value||"", Date: dateToSend },"memo-data",["Timestamp","Title","Details","Date"]);
 }
-,"memo-data",["Timestamp","Title","Details","Date"]); }
-async function handleAddTraining(){ await addRowAndReload("Training",{Subject:qs("tr-subject")?.value||"", Details:qs("tr-details")?.value||"", const raw = qs("tr-date").value;   // this is YYYY-MM-DD
-let formattedDate = "";
-
-if (raw) {
-  const d = new Date(raw + "T00:00:00");  
-  formattedDate = d.toLocaleDateString("en-US", { 
-    year: "numeric", 
-    month: "short", 
-    day: "numeric" 
-  });
+async function handleAddTraining(){
+  const raw = qs("tr-date")?.value || "";
+  const dateToSend = raw;
+  await addRowAndReload("Training",{Subject:qs("tr-subject")?.value||"", Details:qs("tr-details")?.value||"", Date: dateToSend },"training-data",["Timestamp","Subject","Details","Date"]);
 }
-,"training-data",["Timestamp","Subject","Details","Date"]); }
-async function handleAddPni(){ await addRowAndReload("Pni",{Subject:qs("pn-subject")?.value||"", Details:qs("pn-details")?.value||"", const raw = qs("pn-date").value;   // this is YYYY-MM-DD
-let formattedDate = "";
-
-if (raw) {
-  const d = new Date(raw + "T00:00:00");  
-  formattedDate = d.toLocaleDateString("en-US", { 
-    year: "numeric", 
-    month: "short", 
-    day: "numeric" 
-  });
+async function handleAddPni(){
+  const raw = qs("pn-date")?.value || "";
+  const dateToSend = raw;
+  await addRowAndReload("Pni",{Subject:qs("pn-subject")?.value||"", Details:qs("pn-details")?.value||"", Date: dateToSend },"pni-data",["Timestamp","Subject","Details","Date"]);
 }
-,"pni-data",["Timestamp","Subject","Details","Date"]); }
 
 async function addRowAndReload(sheet, fields, containerId, columns){
   try{
@@ -593,7 +554,11 @@ async function loadChat(){
     data.slice().reverse().forEach(r=>{
       const d = document.createElement("div");
       d.className = "message";
-      d.innerHTML = `<small>[${shortDate(r.Timestamp)}] <b>${escapeHtml(r.Name||"")}</b>: ${escapeHtml(r.Message||"")}</small>`;
+      // show timestamp as friendly date
+      const ts = r.Timestamp || "";
+      const tObj = new Date(ts);
+      const tsDisplay = isNaN(tObj) ? ts : tObj.toLocaleString(); // keep time for chat
+      d.innerHTML = `<small>[${escapeHtml(tsDisplay)}] <b>${escapeHtml(r.Name||"")}</b>: ${escapeHtml(r.Message||"")}</small>`;
       box.appendChild(d);
     });
     if(!data.length) box.innerHTML="<small>No chat messages</small>";

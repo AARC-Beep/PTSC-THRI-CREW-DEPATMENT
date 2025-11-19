@@ -251,12 +251,12 @@ function getColumnsForSheet(sheet){
 /* -------------------- ARCHIVE MAPPING -------------------- */
 function getArchiveSheet(sheet){
   const map = {
-    "Vessel_Join":"Vessel_Join_Archive",
-    "Arrivals":"Arrivals_Archive",
-    "Updates":"Updates_Archive",
-    "Memo":"Memo_Archive",
-    "Training":"Training_Archive",
-    "Pni":"Pni_Archive"
+    "Vessel_Join":"Archive_Vessel_Join",
+    "Arrivals":"Archive_Arrivals",
+    "Updates":"Archive_Updates",
+    "Memo":"Archive_Memo",
+    "Training":"Archive_Training",
+    "Pni":"Archive_Pni"
   };
   return map[sheet] || null;
 }

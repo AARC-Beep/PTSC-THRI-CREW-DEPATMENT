@@ -482,10 +482,10 @@ async function handleAddArrivals(){
   await addRowAndReload("Arrivals", fields, "crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
 }
 
-async function handleAddUpdate(){ await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", Date:qs("up-date")?.value||""},"daily-updates-data",["Timestamp","Title","Details","Date","UID"]); }
-async function handleAddMemo(){ await addRowAndReload("Memo",{Title:qs("memo-title")?.value||"", Details:qs("memo-details")?.value||"", Date:qs("memo-date")?.value||""},"memo-data",["Timestamp","Title","Details","Date","UID"]); }
-async function handleAddTraining(){ await addRowAndReload("Training",{Subject:qs("tr-subject")?.value||"", Details:qs("tr-details")?.value||"", Date:qs("tr-date")?.value||""},"training-data",["Timestamp","Subject","Details","Date","UID"]); }
-async function handleAddPni(){ await addRowAndReload("Pni",{Subject:qs("pn-subject")?.value||"", Details:qs("pn-details")?.value||"", Date:qs("pn-date")?.value||""},"pni-data",["Timestamp","Subject","Details","Date","UID"]); }
+async function handleAddUpdate(){ await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", Date:qs("up-date")?.value||""},"daily-updates-data",["Timestamp","Title","Details","Date"]); }
+async function handleAddMemo(){ await addRowAndReload("Memo",{Title:qs("memo-title")?.value||"", Details:qs("memo-details")?.value||"", Date:qs("memo-date")?.value||""},"memo-data",["Timestamp","Title","Details","Date"]); }
+async function handleAddTraining(){ await addRowAndReload("Training",{Subject:qs("tr-subject")?.value||"", Details:qs("tr-details")?.value||"", Date:qs("tr-date")?.value||""},"training-data",["Timestamp","Subject","Details","Date"]); }
+async function handleAddPni(){ await addRowAndReload("Pni",{Subject:qs("pn-subject")?.value||"", Details:qs("pn-details")?.value||"", Date:qs("pn-date")?.value||""},"pni-data",["Timestamp","Subject","Details","Date"]); }
 
 async function addRowAndReload(sheet, fields, containerId, columns){
   try{

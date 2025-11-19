@@ -151,97 +151,65 @@ async function loadAllData() {
 
   await Promise.all(loadPromises);
 
-  // Load chat after all tables
-  try {
-    await loadChat();
-  } catch (err) {
-    console.error("Failed to load chat:", err);
-    const chatContainer = document.getElementById("chat-container");
-    if (chatContainer) chatContainer.innerHTML = "<p>Error loading chat.</p>";
-  }
-}
-
 async function loadTable(sheetName, containerId, columns) {
   const container = document.getElementById(containerId);
-  if (!container) {
-    console.warn(`Container with ID "${containerId}" not found.`);
-    return;
-  }
-
-  container.innerHTML = "<p>Loading data...</p>";
+  container.innerHTML = ""; // clear previous content
 
   try {
-    const data = await apiFetch(new URLSearchParams({ sheet: sheetName, action: "get" }));
-    container.innerHTML = ""; // clear loading message
+    const data = await apiFetch({ sheet: sheetName, action: "get" });
+    if (!data || !Array.isArray(data)) return;
 
-    if (!data || data.length === 0) {
-      container.innerHTML = "<p>No data available.</p>";
-      return;
-    }
-
-    // Create table
     const table = document.createElement("table");
-    table.className = "table table-striped table-bordered";
+    table.classList.add("table");
 
-    // Table header
+    // Build header
     const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
+    const trHead = document.createElement("tr");
     columns.forEach(col => {
       const th = document.createElement("th");
       th.textContent = col;
-      th.scope = "col";
-      headerRow.appendChild(th);
+      trHead.appendChild(th);
     });
+    // Add Archive column
+    const thAction = document.createElement("th");
+    thAction.textContent = "Archive";
+    trHead.appendChild(thAction);
 
-    const actionTh = document.createElement("th");
-    actionTh.textContent = "Actions";
-    actionTh.scope = "col";
-    headerRow.appendChild(actionTh);
-    thead.appendChild(headerRow);
+    thead.appendChild(trHead);
     table.appendChild(thead);
 
-    // Table body
+    // Build body
     const tbody = document.createElement("tbody");
-
-    data.forEach(item => {
+    data.forEach(row => {
       const tr = document.createElement("tr");
-
       columns.forEach(col => {
         const td = document.createElement("td");
-        td.textContent = item[col] || "";
+        td.textContent = row[col] || "";
         tr.appendChild(td);
       });
 
-      // Actions column
-      const actionTd = document.createElement("td");
-
-      // Edit button
-      const editBtn = document.createElement("button");
-      editBtn.className = "btn btn-sm btn-primary me-1";
-      editBtn.textContent = "Edit";
-      editBtn.addEventListener("click", () => openEditModal(sheetName, item.UID));
-
-      // Archive button (previously Delete)
-      const deleteBtn = document.createElement("button");
-      deleteBtn.className = "btn btn-sm btn-danger";
-      deleteBtn.textContent = "Archive";
-      deleteBtn.addEventListener("click", () => deleteRowConfirm(sheetName, item.UID));
-
-      actionTd.appendChild(editBtn);
-      actionTd.appendChild(deleteBtn);
-      tr.appendChild(actionTd);
+      // Archive button
+      const tdAction = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.textContent = "Archive";
+      btn.classList.add("btn", "btn-sm");
+      btn.onclick = () => deleteRowConfirm(sheetName, row["UID"]);
+      tdAction.appendChild(btn);
+      tr.appendChild(tdAction);
 
       tbody.appendChild(tr);
     });
 
     table.appendChild(tbody);
     container.appendChild(table);
-
   } catch (err) {
     console.error("loadTable error:", err);
-    container.innerHTML = "<p>Error loading table.</p>";
-    showModal("Error loading table: " + err.message);
   }
+}
+
+// Helper: map sheet to container
+function mapSheetToContainer(sheetName) {
+  return sheetName + "_container"; // assumes your HTML container IDs follow this pattern
 }
 
 /* -------------------- FORMS -------------------- */

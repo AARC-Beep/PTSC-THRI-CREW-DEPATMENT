@@ -466,7 +466,7 @@ async function handleAddVesselJoin(){
     Date: qs("vj-date")?.value||"",
     Flight: qs("vj-flight")?.value||""
   };
-  await addRowAndReload("Vessel_Join", fields, "crew-join-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"]);
+  await addRowAndReload("Vessel_Join", fields, "crew-join-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
 }
 
 async function handleAddArrivals(){
@@ -479,7 +479,7 @@ async function handleAddArrivals(){
     Date: qs("av-date")?.value||"",
     Flight: qs("av-flight")?.value||""
   };
-  await addRowAndReload("Arrivals", fields, "crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight","UID"]);
+  await addRowAndReload("Arrivals", fields, "crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
 }
 
 async function handleAddUpdate(){ await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", Date:qs("up-date")?.value||""},"daily-updates-data",["Timestamp","Title","Details","Date","UID"]); }

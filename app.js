@@ -238,12 +238,12 @@ function mapSheetToContainer(sheet){
 
 function getColumnsForSheet(sheet){
   const map = {
-    "Vessel_Join": ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight", "UID"],
-    "Arrivals": ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight", "UID"],
-    "Updates": ["Title", "Details", "Date", "UID"],
-    "Memo": ["Title", "Details", "Date", "UID"],
-    "Training": ["Subject", "Details", "Date", "UID"],
-    "Pni": ["Subject", "Details", "Date", "UID"]
+    "Vessel_Join": ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"],
+    "Arrivals": ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"],
+    "Updates": ["Title", "Details", "Date"],
+    "Memo": ["Title", "Details", "Date"],
+    "Training": ["Subject", "Details", "Date"],
+    "Pni": ["Subject", "Details", "Date"]
   };
   return map[sheet] || [];
 }

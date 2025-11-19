@@ -483,11 +483,24 @@ function closeModal() {
 /* --------------------- DELETE / ARCHIVE (client) --------------------- */
 async function deleteRowConfirm(sheetName, uid) {
   if (!confirm("Are you sure you want to archive this row?")) return;
+
   try {
-    const params = new URLSearchParams({ sheet: sheetName, action: "delete", UID: uid });
+    // Just call the backend delete action
+    const params = new URLSearchParams({
+      sheet: sheetName,   // e.g., "Vessel_Join"
+      action: "delete",   // backend handles moving to sheet-specific archive
+      UID: uid
+    });
+
     const res = await apiFetch(params);
-    // backend returns "Deleted" or similar; we check for success by not throwing
+
+    if (!res || res.status !== "success") {
+      throw new Error(res?.message || "Unknown error from server");
+    }
+
     alert("Row archived successfully");
+
+    // Reload table and dashboard
     await loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));
     await loadDashboard();
   } catch (err) {

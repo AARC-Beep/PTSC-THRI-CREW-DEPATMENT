@@ -263,12 +263,16 @@ function getArchiveSheet(sheet){
 
 async function deleteRowConfirm(sheetName, uid) {
   if (!confirm("Are you sure you want to archive this row?")) return;
+  if (!sheetName || !uid) { alert("Missing sheet or UID"); return; }
+
   try {
+    // Use exact sheet name as in your spreadsheet
     const res = await apiFetch(new URLSearchParams({
       sheet: sheetName,
       action: "delete",
       UID: uid
     }));
+
     alert("Row archived successfully");
     await loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));
     await loadDashboard();

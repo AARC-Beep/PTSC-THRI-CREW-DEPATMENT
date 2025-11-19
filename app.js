@@ -135,12 +135,12 @@ async function loadDashboard(){
 /* -------------------- TABLES -------------------- */
 async function loadAllData() {
   const sheets = [
-    ["Vessel_Join", "crew-join-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight", "UID"]],
-    ["Arrivals", "crew-arrivals-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight", "UID"]],
-    ["Updates", "daily-updates-data", ["Title", "Details", "Date", "UID"]],
-    ["Memo", "memo-data", ["Title", "Details", "Date", "UID"]],
-    ["Training", "training-data", ["Subject", "Details", "Date", "UID"]],
-    ["Pni", "pni-data", ["Subject", "Details", "Date", "UID"]]
+    ["Vessel_Join", "crew-join-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"]],
+    ["Arrivals", "crew-arrivals-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"]],
+    ["Updates", "daily-updates-data", ["Title", "Details", "Date"]],
+    ["Memo", "memo-data", ["Title", "Details", "Date"]],
+    ["Training", "training-data", ["Subject", "Details", "Date"]],
+    ["Pni", "pni-data", ["Subject", "Details", "Date"]]
   ];
 
   const loadPromises = sheets.map(async ([sheetName, containerId, columns]) => {

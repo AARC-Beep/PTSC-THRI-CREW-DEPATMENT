@@ -150,6 +150,7 @@ async function loadAllData() {
   });
 
   await Promise.all(loadPromises);
+}
 
 async function loadTable(sheetName, containerId, columns) {
   const container = document.getElementById(containerId);

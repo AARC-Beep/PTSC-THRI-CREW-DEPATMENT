@@ -315,10 +315,16 @@ async function openEditModal(sheet, uid){
       } else if(k.toLowerCase().includes("date")){
         let v = "";
         if(val){
-          const d = new Date(val);
-if(!isNaN(d)) {
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  v = d.toLocaleDateString('en-US', options); // "Nov 12, 2025"
+         const raw = qs("vj-date").value;   // this is YYYY-MM-DD
+let formattedDate = "";
+
+if (raw) {
+  const d = new Date(raw + "T00:00:00");  
+  formattedDate = d.toLocaleDateString("en-US", { 
+    year: "numeric", 
+    month: "short", 
+    day: "numeric" 
+  });
 }
 
         }

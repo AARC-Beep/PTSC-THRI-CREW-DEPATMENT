@@ -119,7 +119,7 @@ async function loadDashboard(){
       rows.forEach(r=>{
         const d = document.createElement("div");
         d.className = "card-body";
-        const dateField = r.Date ? shortDate(r.Date) : shortDate(r.Timestamp);
+        const dateField = new Date(r.Date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}); // → "Nov 12, 2025"
         const title = r.Vessel || r.Title || r.Subject || "";
         d.innerHTML = `<small>${escapeHtml(dateField)} • <b>${escapeHtml(title)}</b></small>`;
         container.appendChild(d);

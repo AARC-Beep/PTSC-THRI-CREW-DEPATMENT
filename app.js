@@ -266,7 +266,8 @@ async function deleteRowConfirm(sheetName, uid) {
   if (!sheetName || !uid) { alert("Missing sheet or UID"); return; }
 
   try {
-    // Use exact sheet name as in your spreadsheet
+    console.log("Attempting to archive UID:", uid, "from sheet:", sheetName, "to archive:", getArchiveSheet(sheetName));
+
     const res = await apiFetch(new URLSearchParams({
       sheet: sheetName,
       action: "delete",

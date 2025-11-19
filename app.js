@@ -307,7 +307,11 @@ async function openEditModal(sheet, uid){
         let v = "";
         if(val){
           const d = new Date(val);
-          if(!isNaN(d)) v = d.toISOString().slice(0,10);
+if(!isNaN(d)) {
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  v = d.toLocaleDateString('en-US', options); // "Nov 12, 2025"
+}
+
         }
         html += `<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${v}">`;
       } else {

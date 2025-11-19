@@ -157,7 +157,7 @@ async function loadTable(sheetName, containerId, columns) {
   container.innerHTML = ""; // clear previous content
 
   try {
-    const data = await apiFetch({ sheet: sheetName, action: "get" });
+    const data = await apiFetch(new URLSearchParams({ sheet: sheetName, action: "get" }));
     if (!data || !Array.isArray(data)) return;
 
     const table = document.createElement("table");
@@ -175,7 +175,6 @@ async function loadTable(sheetName, containerId, columns) {
     const thAction = document.createElement("th");
     thAction.textContent = "Archive";
     trHead.appendChild(thAction);
-
     thead.appendChild(trHead);
     table.appendChild(thead);
 
@@ -197,7 +196,6 @@ async function loadTable(sheetName, containerId, columns) {
       btn.onclick = () => deleteRowConfirm(sheetName, row["UID"]);
       tdAction.appendChild(btn);
       tr.appendChild(tdAction);
-
       tbody.appendChild(tr);
     });
 

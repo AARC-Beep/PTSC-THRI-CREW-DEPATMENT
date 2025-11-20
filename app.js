@@ -590,4 +590,28 @@ async function sendMessage(){
 async function initReload(){
   await loadDashboard();
   await loadAllData();
+  await loadChat();
+  startAutoRefresh();  // start 15-second auto updates
+}
+
+/* -------------------- AUTO REFRESH (15 seconds) -------------------- */
+let autoReloadTimer = null;
+
+function startAutoRefresh() {
+  if (autoReloadTimer) clearInterval(autoReloadTimer);
+
+  autoReloadTimer = setInterval(async () => {
+    // Don't reload if a modal or form is open (prevents user losing edits)
+    const modalOpen = document.getElementById("customModal");
+    const formOpen = document.querySelector("div[id$='-form'][style*='display: block']");
+
+    if (modalOpen || formOpen) return;
+
+    console.log("Auto-refresh triggered");
+
+    await loadDashboard();
+    await loadAllData();
+    await loadChat();
+
+  }, 15000); // 15 seconds
 }

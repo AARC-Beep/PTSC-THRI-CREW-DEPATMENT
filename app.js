@@ -569,11 +569,21 @@ async function sendMessage(){
   const input = qs("chat-input");
   const msg = input?.value.trim();
   if(!msg) return;
+
+  const p = {
+    sheet: "Chatboard",
+    action: "chat",
+    Name: sessionStorage.getItem("loggedInUser") || "User",
+    Message: msg
+  };
+
   try{
-    await apiFetch(new URLSearchParams({ sheet:"Chatboard", action:"chat", Name:sessionStorage.getItem("loggedInUser")||"User", Message:msg }));
-    input.value="";
+    await apiFetch(p);  // Message is now a plain string
+    input.value = "";
     await loadChat();
-  }catch(e){ alert("Failed to send chat: "+e.message); }
+  }catch(e){
+    alert("Failed to send chat: " + e.message);
+  }
 }
 
 /* -------------------- INIT -------------------- */

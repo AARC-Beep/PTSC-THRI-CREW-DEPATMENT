@@ -1,5 +1,5 @@
 /* ============================================================
-   PTSC / THRI Crew Dashboard - Full JS (fixed)
+   PTSC / THRI Crew Dashboard - Full JS
    Supports: get, getItem, add, update, delete (archive), chat, PDF
 ============================================================= */
 
@@ -15,7 +15,6 @@ function escapeHtml(unsafe){
   return String(unsafe).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 }
 
-// shortDate kept for places that need YYYY-MM-DD output
 function shortDate(v){
   if(!v) return "";
   const d = new Date(v);
@@ -31,7 +30,6 @@ function makeId(name, prefix="edit-"){
 }
 
 async function apiFetch(params){
-  // accept either URLSearchParams or object
   let urlParams;
   if(params instanceof URLSearchParams){
     urlParams = params;
@@ -120,12 +118,10 @@ async function loadDashboard(){
       rows.forEach(r=>{
         const d = document.createElement("div");
         d.className = "card-body";
-
-        // handle date display: prefer Date field, fallback to Timestamp
-        const rawDate = r.Date || r.Timestamp || "";
+        const rawDate = r.Date || r.Timestamp;
         const dObj = new Date(rawDate);
         const dateField = isNaN(dObj)
-          ? (rawDate ? String(rawDate) : "")
+          ? ""
           : dObj.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
         const title = r.Vessel || r.Title || r.Subject || "";
@@ -166,7 +162,7 @@ async function loadAllData() {
 
 async function loadTable(sheetName, containerId, columns) {
   const container = document.getElementById(containerId);
-  container.innerHTML = ""; // clear previous content
+  container.innerHTML = "";
 
   try {
     const data = await apiFetch({ sheet: sheetName, action: "get" });
@@ -175,7 +171,6 @@ async function loadTable(sheetName, containerId, columns) {
     const table = document.createElement("table");
     table.classList.add("table");
 
-    // Build header
     const thead = document.createElement("thead");
     const trHead = document.createElement("tr");
     columns.forEach(col => {
@@ -183,7 +178,6 @@ async function loadTable(sheetName, containerId, columns) {
       th.textContent = col;
       trHead.appendChild(th);
     });
-    // Add Edit and Archive columns
     ["Edit","Archive"].forEach(txt=>{
       const th = document.createElement("th");
       th.textContent = txt;
@@ -193,28 +187,15 @@ async function loadTable(sheetName, containerId, columns) {
     thead.appendChild(trHead);
     table.appendChild(thead);
 
-    // Build body
     const tbody = document.createElement("tbody");
     data.forEach(row => {
       const tr = document.createElement("tr");
       columns.forEach(col => {
         const td = document.createElement("td");
-        const raw = row[col] || "";
-        // if column is a date column, format nicely
-        if (String(col).toLowerCase().includes("date") && raw) {
-          const dObj = new Date(raw);
-          if (!isNaN(dObj)) {
-            td.textContent = dObj.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-          } else {
-            td.textContent = raw;
-          }
-        } else {
-          td.textContent = raw;
-        }
+        td.textContent = row[col] || "";
         tr.appendChild(td);
       });
 
-      // Edit button
       const tdEdit = document.createElement("td");
       const btnEdit = document.createElement("button");
       btnEdit.textContent = "Edit";
@@ -223,7 +204,6 @@ async function loadTable(sheetName, containerId, columns) {
       tdEdit.appendChild(btnEdit);
       tr.appendChild(tdEdit);
 
-      // Archive button
       const tdAction = document.createElement("td");
       const btn = document.createElement("button");
       btn.textContent = "Archive";
@@ -323,18 +303,7 @@ async function openEditModal(sheet, uid){
       if(k.toLowerCase().includes("details") || k.toLowerCase().includes("message")){
         html += `<label>${escapeHtml(k)}</label><textarea id="${inputId}" class="form-control mb-2">${escapeHtml(val)}</textarea>`;
       } else if(k.toLowerCase().includes("date")){
-        // input type="date" must receive YYYY-MM-DD
-        let v = "";
-        if(val){
-          const d = new Date(val);
-          if(!isNaN(d)){
-            v = d.toISOString().slice(0,10); // YYYY-MM-DD
-          } else {
-            // fallback: try to keep original if it already looks like YYYY-MM-DD
-            v = val.length >= 10 ? val.slice(0,10) : "";
-          }
-        }
-        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${escapeHtml(v)}">`;
+        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${val}">`;
       } else {
         html += `<label>${escapeHtml(k)}</label><input id="${inputId}" class="form-control mb-2" value="${escapeHtml(val)}">`;
       }
@@ -401,7 +370,7 @@ function closeModal(){ const modal = qs("customModal"); if(modal) modal.remove()
 
 /* -------------------- FORMS & ADD HANDLERS -------------------- */
 function renderForm(type){
-  const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD for input[type=date]
+  const today = new Date().toISOString().slice(0,10);
   switch(type){
     case "join":
       return `<div class="row g-2">
@@ -436,7 +405,7 @@ function renderForm(type){
               <textarea id="up-details" class="form-control mb-2" placeholder="Details"></textarea>
               <input id="up-date" type="date" class="form-control mb-2" value="${today}">
               <div class="mt-2">
-                <button class="btn btn-success" onclick="handleAddUpdate()">Save</button>
+                <button class="btn btn-success" onclick="handleAddUpdates()">Save</button>
                 <button class="btn btn-secondary" onclick="toggleForm('updates')">Cancel</button>
               </div>`;
     case "memo":
@@ -456,9 +425,9 @@ function renderForm(type){
                 <button class="btn btn-secondary" onclick="toggleForm('training')">Cancel</button>
               </div>`;
     case "pni":
-      return `<input id="pn-subject" class="form-control mb-2" placeholder="Subject">
-              <textarea id="pn-details" class="form-control mb-2" placeholder="Details"></textarea>
-              <input id="pn-date" type="date" class="form-control mb-2" value="${today}">
+      return `<input id="pni-subject" class="form-control mb-2" placeholder="Subject">
+              <textarea id="pni-details" class="form-control mb-2" placeholder="Details"></textarea>
+              <input id="pni-date" type="date" class="form-control mb-2" value="${today}">
               <div class="mt-2">
                 <button class="btn btn-success" onclick="handleAddPni()">Save</button>
                 <button class="btn btn-secondary" onclick="toggleForm('pni')">Cancel</button>
@@ -467,117 +436,96 @@ function renderForm(type){
   }
 }
 
-function toggleForm(id){
-  const map = {
-    join:"join-form", arrivals:"arrival-form", updates:"update-form",
-    memo:"memo-form", training:"training-form", pni:"pni-form"
-  };
-  const containerId = map[id];
-  const c = qs(containerId);
-  if(!c) return;
-  if(c.style.display==="block"){ c.style.display="none"; return; }
-  c.innerHTML = renderForm(id);
-  c.style.display = "block";
+function toggleForm(type){
+  const container = qs("form-container");
+  if(!container) return;
+  if(container.innerHTML) container.innerHTML = "";
+  else container.innerHTML = renderForm(type);
 }
 
 /* -------------------- ADD HANDLERS -------------------- */
 async function handleAddVesselJoin(){
-  // read date input as YYYY-MM-DD (browser provides this)
-  const raw = qs("vj-date")?.value || "";
-  const dateToSend = raw; // store as YYYY-MM-DD
   const fields = {
     Vessel: qs("vj-vessel")?.value||"",
     Principal: qs("vj-principal")?.value||"",
     Port: qs("vj-port")?.value||"",
     "No. of Crew": qs("vj-crew")?.value||"",
     Rank: qs("vj-rank")?.value||"",
-    Date: dateToSend,
+    Date: qs("vj-date")?.value||"",
     Flight: qs("vj-flight")?.value||""
   };
-  await addRowAndReload("Vessel_Join", fields, "crew-join-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
+  await addRowAndReload("Vessel_Join", fields);
 }
 
 async function handleAddArrivals(){
-  const raw = qs("av-date")?.value || "";
-  const dateToSend = raw;
   const fields = {
     Vessel: qs("av-vessel")?.value||"",
     Principal: qs("av-principal")?.value||"",
     Port: qs("av-port")?.value||"",
     "No. of Crew": qs("av-crew")?.value||"",
     Rank: qs("av-rank")?.value||"",
-    Date: dateToSend,
+    Date: qs("av-date")?.value||"",
     Flight: qs("av-flight")?.value||""
   };
-  await addRowAndReload("Arrivals", fields, "crew-arrivals-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
+  await addRowAndReload("Arrivals", fields);
 }
 
-async function handleAddUpdate(){
-  const raw = qs("up-date")?.value || "";
-  const dateToSend = raw;
-  await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", Date: dateToSend },"daily-updates-data",["Timestamp","Title","Details","Date"]);
+async function handleAddUpdates(){
+  const fields = {
+    Title: qs("up-title")?.value||"",
+    Details: qs("up-details")?.value||"",
+    Date: qs("up-date")?.value||""
+  };
+  await addRowAndReload("Updates", fields);
 }
+
 async function handleAddMemo(){
-  const raw = qs("memo-date")?.value || "";
-  const dateToSend = raw;
-  await addRowAndReload("Memo",{Title:qs("memo-title")?.value||"", Details:qs("memo-details")?.value||"", Date: dateToSend },"memo-data",["Timestamp","Title","Details","Date"]);
+  const fields = {
+    Title: qs("memo-title")?.value||"",
+    Details: qs("memo-details")?.value||"",
+    Date: qs("memo-date")?.value||""
+  };
+  await addRowAndReload("Memo", fields);
 }
+
 async function handleAddTraining(){
-  const raw = qs("tr-date")?.value || "";
-  const dateToSend = raw;
-  await addRowAndReload("Training",{Subject:qs("tr-subject")?.value||"", Details:qs("tr-details")?.value||"", Date: dateToSend },"training-data",["Timestamp","Subject","Details","Date"]);
+  const fields = {
+    Subject: qs("tr-subject")?.value||"",
+    Details: qs("tr-details")?.value||"",
+    Date: qs("tr-date")?.value||""
+  };
+  await addRowAndReload("Training", fields);
 }
+
 async function handleAddPni(){
-  const raw = qs("pn-date")?.value || "";
-  const dateToSend = raw;
-  await addRowAndReload("Pni",{Subject:qs("pn-subject")?.value||"", Details:qs("pn-details")?.value||"", Date: dateToSend },"pni-data",["Timestamp","Subject","Details","Date"]);
+  const fields = {
+    Subject: qs("pni-subject")?.value||"",
+    Details: qs("pni-details")?.value||"",
+    Date: qs("pni-date")?.value||""
+  };
+  await addRowAndReload("Pni", fields);
 }
 
-async function addRowAndReload(sheet, fields, containerId, columns){
+/* -------------------- ADD & RELOAD -------------------- */
+async function addRowAndReload(sheet, fields){
   try{
-    await apiFetch(new URLSearchParams({ sheet, action:"add", ...fields }));
-    alert("Added successfully");
-    toggleForm(sheet==="Vessel_Join"?"join":sheet==="Arrivals"?"arrivals":sheet.toLowerCase());
-    await loadTable(sheet, containerId, columns);
+    // ensure all values are strings/numbers
+    for(const k in fields){
+      if(typeof fields[k] === "object") fields[k] = String(fields[k]);
+    }
+    await apiFetch(new URLSearchParams({ sheet, action: "add", ...fields }));
+    toggleForm(sheet.toLowerCase());
+    await loadTable(sheet, mapSheetToContainer(sheet), getColumnsForSheet(sheet));
     await loadDashboard();
-  }catch(e){ alert("Add failed: "+e.message); debugLog("addRowAndReload error", e); }
+  }catch(err){
+    alert("Failed to add: " + err.message);
+    console.error("addRowAndReload error:", err);
+  }
 }
 
-/* -------------------- CHAT -------------------- */
-async function loadChat(){
-  const box = qs("chatboard");
-  if(!box) return;
-  box.innerHTML="Loading...";
-  try{
-    const data = await apiFetch(new URLSearchParams({sheet:"Chatboard", action:"get"})).catch(()=>[]);
-    box.innerHTML="";
-    data.slice().reverse().forEach(r=>{
-      const d = document.createElement("div");
-      d.className = "message";
-      // show timestamp as friendly date
-      const ts = r.Timestamp || "";
-      const tObj = new Date(ts);
-      const tsDisplay = isNaN(tObj) ? ts : tObj.toLocaleString(); // keep time for chat
-      d.innerHTML = `<small>[${escapeHtml(tsDisplay)}] <b>${escapeHtml(r.Name||"")}</b>: ${escapeHtml(r.Message||"")}</small>`;
-      box.appendChild(d);
-    });
-    if(!data.length) box.innerHTML="<small>No chat messages</small>";
-  }catch(e){ box.innerHTML="<small>Error loading chat</small>"; debugLog("loadChat error", e); }
-}
-
-async function sendMessage(){
-  const input = qs("chat-input");
-  const msg = input?.value.trim();
-  if(!msg) return;
-  try{
-    await apiFetch(new URLSearchParams({ sheet:"Chatboard", action:"chat", Name:sessionStorage.getItem("loggedInUser")||"User", Message:msg }));
-    input.value="";
-    await loadChat();
-  }catch(e){ alert("Failed to send chat: "+e.message); }
-}
-
-/* -------------------- INIT -------------------- */
+/* -------------------- INITIAL LOAD -------------------- */
 async function initReload(){
   await loadDashboard();
   await loadAllData();
 }
+

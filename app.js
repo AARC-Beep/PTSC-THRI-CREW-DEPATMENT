@@ -242,6 +242,8 @@ async function loadTable(sheetName, containerId, columns) {
       tr.appendChild(tdAction);
 
       tbody.appendChild(tr);
+     row.classList.add("row-highlight");
+setTimeout(() => row.classList.remove("row-highlight"), 1500);
     });
 
     table.appendChild(tbody);

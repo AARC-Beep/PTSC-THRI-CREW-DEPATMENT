@@ -25,6 +25,13 @@ function shortDate(v){
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function formatDateDisplay(v){
+  if(!v) return "";
+  const d = new Date(v);
+  if(isNaN(d)) return String(v);
+  return d.toLocaleDateString("en-US", {year:"numeric", month:"short", day:"numeric"});
+}
+
 function makeId(name, prefix="edit-"){
   return prefix + String(name).replace(/[^\w\-]/g, "_");
 }
@@ -118,12 +125,8 @@ async function loadDashboard(){
       rows.forEach(r=>{
         const d = document.createElement("div");
         d.className = "card-body";
-        const rawDate = r.Date || r.Timestamp;
-        const dObj = new Date(rawDate);
-        const dateField = isNaN(dObj)
-          ? ""
-          : dObj.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
+        const dateField = formatDateDisplay(r.Date || r.Timestamp);
         const title = r.Vessel || r.Title || r.Subject || "";
         d.innerHTML = `<small>${escapeHtml(dateField)} • <b>${escapeHtml(title)}</b></small>`;
         container.appendChild(d);
@@ -139,34 +142,24 @@ async function loadDashboard(){
 /* -------------------- TABLES -------------------- */
 async function loadAllData() {
   const sheets = [
-    ["Vessel_Join", "crew-join-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"]],
-    ["Arrivals", "crew-arrivals-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"]],
-    ["Updates", "daily-updates-data", ["Title", "Details", "Date"]],
-    ["Memo", "memo-data", ["Title", "Details", "Date"]],
-    ["Training", "training-data", ["Subject", "Details", "Date"]],
-    ["Pni", "pni-data", ["Subject", "Details", "Date"]]
+    ["Vessel_Join", "crew-join-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]],
+    ["Arrivals", "crew-arrivals-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]],
+    ["Updates", "daily-updates-data", ["Title","Details","Date"]],
+    ["Memo", "memo-data", ["Title","Details","Date"]],
+    ["Training", "training-data", ["Subject","Details","Date"]],
+    ["Pni", "pni-data", ["Subject","Details","Date"]]
   ];
 
-  const loadPromises = sheets.map(async ([sheetName, containerId, columns]) => {
-    try {
-      await loadTable(sheetName, containerId, columns);
-    } catch (err) {
-      console.error(`Failed to load sheet "${sheetName}":`, err);
-      const container = document.getElementById(containerId);
-      if (container) container.innerHTML = `<p>Error loading ${sheetName}</p>`;
-    }
-  });
-
-  await Promise.all(loadPromises);
+  await Promise.all(sheets.map(([sheetName, containerId, columns]) => loadTable(sheetName, containerId, columns)));
 }
 
-async function loadTable(sheetName, containerId, columns) {
-  const container = document.getElementById(containerId);
+async function loadTable(sheetName, containerId, columns){
+  const container = qs(containerId);
   container.innerHTML = "";
 
-  try {
+  try{
     const data = await apiFetch({ sheet: sheetName, action: "get" });
-    if (!data || !Array.isArray(data)) return;
+    if(!data || !Array.isArray(data)) return;
 
     const table = document.createElement("table");
     table.classList.add("table");
@@ -183,19 +176,19 @@ async function loadTable(sheetName, containerId, columns) {
       th.textContent = txt;
       trHead.appendChild(th);
     });
-
     thead.appendChild(trHead);
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
-    data.forEach(row => {
+    data.forEach(row=>{
       const tr = document.createElement("tr");
-      columns.forEach(col => {
+      columns.forEach(col=>{
         const td = document.createElement("td");
         td.textContent = row[col] || "";
         tr.appendChild(td);
       });
 
+      // Edit button
       const tdEdit = document.createElement("td");
       const btnEdit = document.createElement("button");
       btnEdit.textContent = "Edit";
@@ -204,11 +197,12 @@ async function loadTable(sheetName, containerId, columns) {
       tdEdit.appendChild(btnEdit);
       tr.appendChild(tdEdit);
 
+      // Archive button
       const tdAction = document.createElement("td");
       const btn = document.createElement("button");
       btn.textContent = "Archive";
-      btn.classList.add("btn", "btn-sm","btn-warning");
-      btn.onclick = () => deleteRowConfirm(sheetName, row["UID"]);
+      btn.classList.add("btn","btn-sm","btn-warning");
+      btn.onclick = () => deleteRowConfirm(sheetName,row["UID"]);
       tdAction.appendChild(btn);
       tr.appendChild(tdAction);
 
@@ -217,9 +211,36 @@ async function loadTable(sheetName, containerId, columns) {
 
     table.appendChild(tbody);
     container.appendChild(table);
-  } catch (err) {
-    console.error("loadTable error:", err);
-    container.innerHTML = `<p>Error loading ${sheetName}</p>`;
+  }catch(err){
+    container.innerHTML = "<small>Error loading</small>";
+    debugLog("loadTable error:", sheetName, err);
+  }
+}
+
+/* -------------------- ARCHIVE MAPPING -------------------- */
+function getArchiveSheet(sheet){
+  const map = {
+    "Vessel_Join":"Archive_Vessel_Join",
+    "Arrivals":"Archive_Arrivals",
+    "Updates":"Archive_Updates",
+    "Memo":"Archive_Memo",
+    "Training":"Archive_Training",
+    "Pni":"Archive_Pni"
+  };
+  return map[sheet] || null;
+}
+
+async function deleteRowConfirm(sheetName, uid){
+  if(!confirm("Are you sure you want to archive this row?")) return;
+  if(!sheetName || !uid){ alert("Missing sheet or UID"); return; }
+
+  try{
+    await apiFetch({ sheet: sheetName, action:"delete", UID: uid });
+    alert("Row archived successfully");
+    await loadTable(sheetName,mapSheetToContainer(sheetName),getColumnsForSheet(sheetName));
+    await loadDashboard();
+  }catch(err){
+    alert("Failed to archive row: " + err.message);
   }
 }
 
@@ -237,112 +258,74 @@ function mapSheetToContainer(sheet){
 
 function getColumnsForSheet(sheet){
   const map = {
-    "Vessel_Join": ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"],
-    "Arrivals": ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"],
-    "Updates": ["Title", "Details", "Date"],
-    "Memo": ["Title", "Details", "Date"],
-    "Training": ["Subject", "Details", "Date"],
-    "Pni": ["Subject", "Details", "Date"]
+    "Vessel_Join":["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"],
+    "Arrivals":["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"],
+    "Updates":["Title","Details","Date"],
+    "Memo":["Title","Details","Date"],
+    "Training":["Subject","Details","Date"],
+    "Pni":["Subject","Details","Date"]
   };
   return map[sheet] || [];
 }
 
-/* -------------------- ARCHIVE MAPPING -------------------- */
-function getArchiveSheet(sheet){
-  const map = {
-    "Vessel_Join":"Archive_Vessel_Join",
-    "Arrivals":"Archive_Arrivals",
-    "Updates":"Archive_Updates",
-    "Memo":"Archive_Memo",
-    "Training":"Archive_Training",
-    "Pni":"Archive_Pni"
-  };
-  return map[sheet] || null;
-}
-
-async function deleteRowConfirm(sheetName, uid) {
-  if (!confirm("Are you sure you want to archive this row?")) return;
-  if (!sheetName || !uid) { alert("Missing sheet or UID"); return; }
-
-  const archiveSheetName = getArchiveSheet(sheetName);
-  console.log("Attempting to archive UID:", uid, "from sheet:", sheetName, "to archive:", archiveSheetName);
-
-  try {
-    const res = await apiFetch(new URLSearchParams({
-      sheet: sheetName,
-      action: "delete",
-      UID: uid
-    }));
-
-    alert("Row archived successfully");
-    await loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));
-    await loadDashboard();
-  } catch (err) {
-    alert("Failed to archive row: " + err.message);
-    console.error("deleteRowConfirm error:", err);
-  }
-}
-
 /* -------------------- EDIT -------------------- */
-let currentEdit = { sheet: null, uid: null, row: null };
+let currentEdit = { sheet:null, uid:null, row:null };
 
 async function openEditModal(sheet, uid){
-  debugLog("DEBUG → openEditModal:", sheet, uid);
   if(!uid){ alert("Cannot edit: UID missing"); return; }
   try{
-    const item = await apiFetch(new URLSearchParams({ sheet, action: "getItem", UID: uid }));
+    const item = await apiFetch({ sheet, action:"getItem", UID: uid });
     if(!item){ alert("Item not found"); return; }
     currentEdit = { sheet, uid, row: item };
 
     let html = `<h5>Edit ${escapeHtml(sheet)}</h5>`;
     for(const k in item){
       if(k === "UID" || k === "Timestamp") continue;
-      const val = String(item[k] || "");
-      const inputId = makeId(k, "edit-");
+      const val = item[k] || "";
+      const inputId = makeId(k);
 
       if(k.toLowerCase().includes("details") || k.toLowerCase().includes("message")){
         html += `<label>${escapeHtml(k)}</label><textarea id="${inputId}" class="form-control mb-2">${escapeHtml(val)}</textarea>`;
       } else if(k.toLowerCase().includes("date")){
-        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${val}">`;
+        const dateValue = val ? new Date(val).toISOString().slice(0,10) : "";
+        html += `<label>${escapeHtml(k)}</label><input type="date" id="${inputId}" class="form-control mb-2" value="${dateValue}">`;
       } else {
-        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" class="form-control mb-2" value="${escapeHtml(val)}">`;
+        html += `<label>${escapeHtml(k)}</label><input type="text" id="${inputId}" class="form-control mb-2" value="${escapeHtml(val)}">`;
       }
     }
 
     html += `<div class="mt-2">
-               <button type="button" class="btn btn-primary" onclick="submitEdit()">Save</button>
-               <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+               <button class="btn btn-primary" onclick="submitEdit()">Save</button>
+               <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
              </div>`;
     showModal(html);
   }catch(err){
     alert("Error loading item: " + err.message);
-    debugLog("openEditModal error", err);
   }
 }
 
 async function submitEdit(){
   if(!currentEdit.uid || !currentEdit.sheet){ alert("Cannot save: UID or sheet missing"); return; }
   try{
-    const p = new URLSearchParams({ sheet: currentEdit.sheet, action: "update", UID: currentEdit.uid });
+    const p = { sheet: currentEdit.sheet, action:"update", UID: currentEdit.uid };
     for(const k in currentEdit.row){
       if(k === "UID" || k === "Timestamp") continue;
-      const el = qs(makeId(k, "edit-"));
-      if(el) p.set(k, el.value);
+      const el = qs(makeId(k));
+      if(el) p[k] = el.value;
     }
     await apiFetch(p);
     alert("Updated successfully");
     closeModal();
-    await loadTable(currentEdit.sheet, mapSheetToContainer(currentEdit.sheet), getColumnsForSheet(currentEdit.sheet));
+    await loadTable(currentEdit.sheet,mapSheetToContainer(currentEdit.sheet),getColumnsForSheet(currentEdit.sheet));
     await loadDashboard();
   }catch(err){
     alert("Update failed: " + err.message);
-    debugLog("submitEdit error", err);
   }
 }
 
 /* -------------------- MODAL -------------------- */
 function showModal(content){
-  const existing = document.getElementById("customModal");
+  const existing = qs("customModal");
   if(existing) existing.remove();
   const modal = document.createElement("div");
   modal.id = "customModal";
@@ -405,7 +388,7 @@ function renderForm(type){
               <textarea id="up-details" class="form-control mb-2" placeholder="Details"></textarea>
               <input id="up-date" type="date" class="form-control mb-2" value="${today}">
               <div class="mt-2">
-                <button class="btn btn-success" onclick="handleAddUpdates()">Save</button>
+                <button class="btn btn-success" onclick="handleAddUpdate()">Save</button>
                 <button class="btn btn-secondary" onclick="toggleForm('updates')">Cancel</button>
               </div>`;
     case "memo":
@@ -432,100 +415,104 @@ function renderForm(type){
                 <button class="btn btn-success" onclick="handleAddPni()">Save</button>
                 <button class="btn btn-secondary" onclick="toggleForm('pni')">Cancel</button>
               </div>`;
-    default: return "";
   }
 }
 
-function toggleForm(type){
-  const container = qs("form-container");
-  if(!container) return;
-  if(container.innerHTML) container.innerHTML = "";
-  else container.innerHTML = renderForm(type);
-}
-
-/* -------------------- ADD HANDLERS -------------------- */
+/* -------------------- HANDLERS -------------------- */
 async function handleAddVesselJoin(){
-  const fields = {
-    Vessel: qs("vj-vessel")?.value||"",
-    Principal: qs("vj-principal")?.value||"",
-    Port: qs("vj-port")?.value||"",
-    "No. of Crew": qs("vj-crew")?.value||"",
-    Rank: qs("vj-rank")?.value||"",
-    Date: qs("vj-date")?.value||"",
-    Flight: qs("vj-flight")?.value||""
+  const p = {
+    sheet: "Vessel_Join",
+    action: "add",
+    Vessel: qs("vj-vessel")?.value,
+    Principal: qs("vj-principal")?.value,
+    Port: qs("vj-port")?.value,
+    "No. of Crew": qs("vj-crew")?.value,
+    Rank: qs("vj-rank")?.value,
+    Date: qs("vj-date")?.value,
+    Flight: qs("vj-flight")?.value
   };
-  await addRowAndReload("Vessel_Join", fields);
+  await addRowAPI(p);
+  toggleForm('join');
 }
 
 async function handleAddArrivals(){
-  const fields = {
-    Vessel: qs("av-vessel")?.value||"",
-    Principal: qs("av-principal")?.value||"",
-    Port: qs("av-port")?.value||"",
-    "No. of Crew": qs("av-crew")?.value||"",
-    Rank: qs("av-rank")?.value||"",
-    Date: qs("av-date")?.value||"",
-    Flight: qs("av-flight")?.value||""
+  const p = {
+    sheet: "Arrivals",
+    action: "add",
+    Vessel: qs("av-vessel")?.value,
+    Principal: qs("av-principal")?.value,
+    Port: qs("av-port")?.value,
+    "No. of Crew": qs("av-crew")?.value,
+    Rank: qs("av-rank")?.value,
+    Date: qs("av-date")?.value,
+    Flight: qs("av-flight")?.value
   };
-  await addRowAndReload("Arrivals", fields);
+  await addRowAPI(p);
+  toggleForm('arrivals');
 }
 
-async function handleAddUpdates(){
-  const fields = {
-    Title: qs("up-title")?.value||"",
-    Details: qs("up-details")?.value||"",
-    Date: qs("up-date")?.value||""
+async function handleAddUpdate(){
+  const p = {
+    sheet:"Updates", action:"add",
+    Title: qs("up-title")?.value,
+    Details: qs("up-details")?.value,
+    Date: qs("up-date")?.value
   };
-  await addRowAndReload("Updates", fields);
+  await addRowAPI(p);
+  toggleForm('updates');
 }
 
 async function handleAddMemo(){
-  const fields = {
-    Title: qs("memo-title")?.value||"",
-    Details: qs("memo-details")?.value||"",
-    Date: qs("memo-date")?.value||""
+  const p = {
+    sheet:"Memo", action:"add",
+    Title: qs("memo-title")?.value,
+    Details: qs("memo-details")?.value,
+    Date: qs("memo-date")?.value
   };
-  await addRowAndReload("Memo", fields);
+  await addRowAPI(p);
+  toggleForm('memo');
 }
 
 async function handleAddTraining(){
-  const fields = {
-    Subject: qs("tr-subject")?.value||"",
-    Details: qs("tr-details")?.value||"",
-    Date: qs("tr-date")?.value||""
+  const p = {
+    sheet:"Training", action:"add",
+    Subject: qs("tr-subject")?.value,
+    Details: qs("tr-details")?.value,
+    Date: qs("tr-date")?.value
   };
-  await addRowAndReload("Training", fields);
+  await addRowAPI(p);
+  toggleForm('training');
 }
 
 async function handleAddPni(){
-  const fields = {
-    Subject: qs("pni-subject")?.value||"",
-    Details: qs("pni-details")?.value||"",
-    Date: qs("pni-date")?.value||""
+  const p = {
+    sheet:"Pni", action:"add",
+    Subject: qs("pni-subject")?.value,
+    Details: qs("pni-details")?.value,
+    Date: qs("pni-date")?.value
   };
-  await addRowAndReload("Pni", fields);
+  await addRowAPI(p);
+  toggleForm('pni');
 }
 
-/* -------------------- ADD & RELOAD -------------------- */
-async function addRowAndReload(sheet, fields){
+async function addRowAPI(params){
   try{
-    // ensure all values are strings/numbers
-    for(const k in fields){
-      if(typeof fields[k] === "object") fields[k] = String(fields[k]);
-    }
-    await apiFetch(new URLSearchParams({ sheet, action: "add", ...fields }));
-    toggleForm(sheet.toLowerCase());
-    await loadTable(sheet, mapSheetToContainer(sheet), getColumnsForSheet(sheet));
+    await apiFetch(params);
+    await loadAllData();
     await loadDashboard();
   }catch(err){
     alert("Failed to add: " + err.message);
-    console.error("addRowAndReload error:", err);
   }
 }
 
-/* -------------------- INITIAL LOAD -------------------- */
+/* -------------------- FORM TOGGLE -------------------- */
+function toggleForm(name){
+  const el = qs("form-"+name);
+  if(el) el.classList.toggle("d-none");
+}
+
+/* -------------------- INIT -------------------- */
 async function initReload(){
   await loadDashboard();
   await loadAllData();
 }
-

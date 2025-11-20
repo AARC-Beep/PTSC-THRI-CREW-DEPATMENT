@@ -139,6 +139,15 @@ async function loadDashboard(){
     }
   }
 }
+function updateTimestamp() {
+  const now = new Date();
+  const formatted = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  document.getElementById("last-updated").textContent = `Last updated: ${formatted}`;
+}
 
 /* -------------------- TABLES -------------------- */
 async function loadAllData() {
@@ -591,7 +600,8 @@ async function initReload(){
   await loadDashboard();
   await loadAllData();
   await loadChat();
-  startAutoRefresh();  // start 15-second auto updates
+  updateTimestamp();   // NEW
+  startAutoRefresh();
 }
 
 /* -------------------- AUTO REFRESH (15 seconds) -------------------- */
@@ -601,17 +611,24 @@ function startAutoRefresh() {
   if (autoReloadTimer) clearInterval(autoReloadTimer);
 
   autoReloadTimer = setInterval(async () => {
-    // Don't reload if a modal or form is open (prevents user losing edits)
+
+    // Prevent refresh if user is typing or editing
     const modalOpen = document.getElementById("customModal");
     const formOpen = document.querySelector("div[id$='-form'][style*='display: block']");
+    const chatTyping = document.getElementById("chat-input") === document.activeElement;
 
-    if (modalOpen || formOpen) return;
+    if (modalOpen || formOpen || chatTyping) return;
 
     console.log("Auto-refresh triggered");
 
+    // Reload everything
     await loadDashboard();
     await loadAllData();
     await loadChat();
 
+    // Update dashboard timestamp
+    updateTimestamp();
+
   }, 15000); // 15 seconds
 }
+

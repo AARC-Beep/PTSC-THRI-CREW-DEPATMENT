@@ -1,7 +1,7 @@
 /* ============================================================
-   PTSC / THRI Crew Dashboard - Full JS (fixed)
-   Supports: get, getItem, add, update, delete (archive), chat, PDF
-============================================================= */
+   PTSC / THRI Crew Dashboard - Full JS (Rewritten)
+   Features: add, edit, delete (archive), chat, auto-refresh
+============================================================== */
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxoLIrNGnPkxfwoZhzNqnquDbDLoKnqmkSpU-ET6wlq1lA-pQemm88dqyNbsJnl7Lem/exec";
 
@@ -15,15 +15,11 @@ function escapeHtml(unsafe){
   return String(unsafe).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 }
 
-// shortDate kept for places that need YYYY-MM-DD output
 function shortDate(v){
   if(!v) return "";
   const d = new Date(v);
   if(isNaN(d)) return String(v);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function makeId(name, prefix="edit-"){
@@ -31,13 +27,7 @@ function makeId(name, prefix="edit-"){
 }
 
 async function apiFetch(params){
-  // accept either URLSearchParams or object
-  let urlParams;
-  if(params instanceof URLSearchParams){
-    urlParams = params;
-  } else {
-    urlParams = new URLSearchParams(params);
-  }
+  const urlParams = params instanceof URLSearchParams ? params : new URLSearchParams(params);
   const url = `${GAS_URL}?${urlParams.toString()}`;
   debugLog("API Fetch:", url);
   const res = await fetch(url);
@@ -54,37 +44,34 @@ async function loginUser(){
   const err = qs("login-error");
   if(err) err.innerText = "";
 
-  if(!u || !p){ if(err) err.innerText = "Enter username and password"; return; }
+  if(!u || !p){ if(err) err.innerText="Enter username and password"; return; }
 
   try{
-    const users = await apiFetch(new URLSearchParams({ sheet: "Users", action: "get" }));
-    const match = (users || []).find(x => String(x.Username||"").toLowerCase() === u.toLowerCase() && String(x.Password||"") === p);
-    if(!match){ if(err) err.innerText = "Invalid username or password"; return; }
+    const users = await apiFetch({ sheet: "Users", action: "get" });
+    const match = (users || []).find(x => (x.Username||"").toLowerCase()===u.toLowerCase() && (x.Password||"")===p);
+    if(!match){ if(err) err.innerText="Invalid username or password"; return; }
 
     sessionStorage.setItem("loggedInUser", match.Username);
-    sessionStorage.setItem("userRole", match.Role || "");
-    qs("login-overlay").style.display = "none";
+    sessionStorage.setItem("userRole", match.Role||"");
+    qs("login-overlay").style.display="none";
     showTab("dashboard");
     await initReload();
-  }catch(e){
-    if(err) err.innerText = "Login failed: " + e.message;
-    debugLog("loginUser error:", e);
-  }
+  }catch(e){ if(err) err.innerText="Login failed: "+e.message; debugLog("loginUser error:", e); }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   if(sessionStorage.getItem("loggedInUser")){
-    qs("login-overlay").style.display = "none";
+    qs("login-overlay").style.display="none";
     showTab("dashboard");
     initReload();
   } else {
-    qs("login-overlay").style.display = "flex";
+    qs("login-overlay").style.display="flex";
   }
 });
 
 /* -------------------- TAB NAV -------------------- */
 function showTab(id){
-  document.querySelectorAll(".tab-window").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-window").forEach(t=>t.classList.remove("active"));
   const el = qs(id);
   if(el) el.classList.add("active");
 }
@@ -94,7 +81,7 @@ document.querySelectorAll(".sidebar a[data-tab]").forEach(a=>{
     e.preventDefault();
     const t = a.getAttribute("data-tab");
     const r = sessionStorage.getItem("userRole");
-    if((t==="training" || t==="pni") && r !== "admin"){ alert("Access denied (Admin only)"); return; }
+    if((t==="training" || t==="pni") && r!=="admin"){ alert("Access denied (Admin only)"); return; }
     showTab(t);
   });
 });
@@ -114,451 +101,196 @@ async function loadDashboard(){
     if(!container) continue;
     container.innerHTML = "Loading...";
     try{
-      const data = await apiFetch(new URLSearchParams({ sheet, action: "get" })).catch(()=>[]);
+      const data = await apiFetch({ sheet, action: "get" }).catch(()=>[]);
       const rows = (data||[]).slice(-5).reverse();
       container.innerHTML = "";
       rows.forEach(r=>{
         const d = document.createElement("div");
         d.className = "card-body";
-
-        // handle date display: prefer Date field, fallback to Timestamp
         const rawDate = r.Date || r.Timestamp || "";
         const dObj = new Date(rawDate);
-        const dateField = isNaN(dObj)
-          ? (rawDate ? String(rawDate) : "")
-          : dObj.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-
+        const dateField = isNaN(dObj) ? (rawDate?String(rawDate):"") : dObj.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"});
         const title = r.Vessel || r.Title || r.Subject || "";
         d.innerHTML = `<small>${escapeHtml(dateField)} • <b>${escapeHtml(title)}</b></small>`;
         container.appendChild(d);
       });
-      if(!rows.length) container.innerHTML = "<small>No recent items</small>";
-    }catch(err){
-      container.innerHTML = "<small>Error loading</small>";
-      debugLog("Dashboard load error", sheet, err);
-    }
+      if(!rows.length) container.innerHTML="<small>No recent items</small>";
+    }catch(err){ container.innerHTML="<small>Error loading</small>"; debugLog("Dashboard load error", sheet, err); }
   }
 }
 
 /* -------------------- TABLES -------------------- */
-async function loadAllData() {
+async function loadAllData(){
   const sheets = [
-    ["Vessel_Join", "crew-join-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"]],
-    ["Arrivals", "crew-arrivals-data", ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"]],
-    ["Updates", "daily-updates-data", ["Title", "Details", "Date"]],
-    ["Memo", "memo-data", ["Title", "Details", "Date"]],
-    ["Training", "training-data", ["Subject", "Details", "Date"]],
-    ["Pni", "pni-data", ["Subject", "Details", "Date"]]
+    ["Vessel_Join","crew-join-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]],
+    ["Arrivals","crew-arrivals-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]],
+    ["Updates","daily-updates-data", ["Title","Details","Date"]],
+    ["Memo","memo-data", ["Title","Details","Date"]],
+    ["Training","training-data", ["Subject","Details","Date"]],
+    ["Pni","pni-data", ["Subject","Details","Date"]]
   ];
-
-  const loadPromises = sheets.map(async ([sheetName, containerId, columns]) => {
-    try {
-      await loadTable(sheetName, containerId, columns);
-    } catch (err) {
-      console.error(`Failed to load sheet "${sheetName}":`, err);
-      const container = document.getElementById(containerId);
-      if (container) container.innerHTML = `<p>Error loading ${sheetName}</p>`;
-    }
-  });
-
-  await Promise.all(loadPromises);
+  await Promise.all(sheets.map(([sheet,container,cols])=>loadTable(sheet,container,cols)));
 }
 
-async function loadTable(sheetName, containerId, columns) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = ""; // clear previous content
-
-  try {
+async function loadTable(sheetName, containerId, columns){
+  const container = qs(containerId);
+  container.innerHTML = "";
+  try{
     const data = await apiFetch({ sheet: sheetName, action: "get" });
-    if (!data || !Array.isArray(data)) return;
+    if(!data || !Array.isArray(data)) return;
 
     const table = document.createElement("table");
     table.classList.add("table");
-
-    // Build header
     const thead = document.createElement("thead");
     const trHead = document.createElement("tr");
-    columns.forEach(col => {
-      const th = document.createElement("th");
-      th.textContent = col;
-      trHead.appendChild(th);
+    columns.forEach(col=>{
+      const th = document.createElement("th"); th.textContent=col; trHead.appendChild(th);
     });
-    // Add Edit and Archive columns
-    ["Edit","Archive"].forEach(txt=>{
-      const th = document.createElement("th");
-      th.textContent = txt;
-      trHead.appendChild(th);
-    });
+    ["Edit","Archive"].forEach(txt=>{ const th=document.createElement("th"); th.textContent=txt; trHead.appendChild(th); });
+    thead.appendChild(trHead); table.appendChild(thead);
 
-    thead.appendChild(trHead);
-    table.appendChild(thead);
-
-    // Build body
     const tbody = document.createElement("tbody");
-    data.forEach(row => {
-      const tr = document.createElement("tr");
-      columns.forEach(col => {
-        const td = document.createElement("td");
-        const raw = row[col] || "";
-        // if column is a date column, format nicely
-        if (String(col).toLowerCase().includes("date") && raw) {
-          const dObj = new Date(raw);
-          if (!isNaN(dObj)) {
-            td.textContent = dObj.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-          } else {
-            td.textContent = raw;
-          }
-        } else {
-          td.textContent = raw;
-        }
+    data.forEach(row=>{
+      const tr=document.createElement("tr");
+      columns.forEach(col=>{
+        const td=document.createElement("td"); const raw=row[col]||"";
+        if(String(col).toLowerCase().includes("date") && raw){ const d=new Date(raw); td.textContent=isNaN(d)?raw:d.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"}); }
+        else td.textContent=raw;
         tr.appendChild(td);
       });
-
-      // Edit button
-      const tdEdit = document.createElement("td");
-      const btnEdit = document.createElement("button");
-      btnEdit.textContent = "Edit";
-      btnEdit.classList.add("btn","btn-sm","btn-primary");
-      btnEdit.onclick = ()=>openEditModal(sheetName,row["UID"]);
-      tdEdit.appendChild(btnEdit);
-      tr.appendChild(tdEdit);
-
-      // Archive button
-      const tdAction = document.createElement("td");
-      const btn = document.createElement("button");
-      btn.textContent = "Archive";
-      btn.classList.add("btn", "btn-sm","btn-warning");
-      btn.onclick = () => deleteRowConfirm(sheetName, row["UID"]);
-      tdAction.appendChild(btn);
-      tr.appendChild(tdAction);
+      // Edit
+      const tdEdit=document.createElement("td"); const btnEdit=document.createElement("button");
+      btnEdit.textContent="Edit"; btnEdit.classList.add("btn","btn-sm","btn-primary"); btnEdit.onclick=()=>openEditModal(sheetName,row["UID"]);
+      tdEdit.appendChild(btnEdit); tr.appendChild(tdEdit);
+      // Archive
+      const tdAction=document.createElement("td"); const btn=document.createElement("button");
+      btn.textContent="Archive"; btn.classList.add("btn","btn-sm","btn-warning");
+      btn.onclick=()=>archiveRow(sheetName,row["UID"]);
+      tdAction.appendChild(btn); tr.appendChild(tdAction);
 
       tbody.appendChild(tr);
     });
-
     table.appendChild(tbody);
     container.appendChild(table);
-  } catch (err) {
-    console.error("loadTable error:", err);
-    container.innerHTML = `<p>Error loading ${sheetName}</p>`;
-  }
+  }catch(err){ console.error("loadTable error:", err); container.innerHTML=`<p>Error loading ${sheetName}</p>`; }
 }
 
 function mapSheetToContainer(sheet){
-  const map = {
-    "Vessel_Join":"crew-join-data",
-    "Arrivals":"crew-arrivals-data",
-    "Updates":"daily-updates-data",
-    "Memo":"memo-data",
-    "Training":"training-data",
-    "Pni":"pni-data"
-  };
-  return map[sheet] || "";
+  const map = { "Vessel_Join":"crew-join-data", "Arrivals":"crew-arrivals-data", "Updates":"daily-updates-data", "Memo":"memo-data", "Training":"training-data", "Pni":"pni-data" };
+  return map[sheet]||"";
 }
 
 function getColumnsForSheet(sheet){
   const map = {
-    "Vessel_Join": ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"],
-    "Arrivals": ["Vessel", "Principal", "Port", "No. of Crew", "Rank", "Date", "Flight"],
-    "Updates": ["Title", "Details", "Date"],
-    "Memo": ["Title", "Details", "Date"],
-    "Training": ["Subject", "Details", "Date"],
-    "Pni": ["Subject", "Details", "Date"]
+    "Vessel_Join":["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"],
+    "Arrivals":["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"],
+    "Updates":["Title","Details","Date"],
+    "Memo":["Title","Details","Date"],
+    "Training":["Subject","Details","Date"],
+    "Pni":["Subject","Details","Date"]
   };
-  return map[sheet] || [];
+  return map[sheet]||[];
 }
 
-/* -------------------- ARCHIVE MAPPING -------------------- */
-function getArchiveSheet(sheet){
-  const map = {
-    "Vessel_Join":"Archive_Vessel_Join",
-    "Arrivals":"Archive_Arrivals",
-    "Updates":"Archive_Updates",
-    "Memo":"Archive_Memo",
-    "Training":"Archive_Training",
-    "Pni":"Archive_Pni"
-  };
-  return map[sheet] || null;
-}
+/* -------------------- ARCHIVE -------------------- */
+async function archiveRow(sheetName, uid){
+  if(!confirm("Are you sure you want to archive this row?")) return;
+  if(!sheetName || !uid) { alert("Missing sheet or UID"); return; }
 
-async function deleteRowConfirm(sheetName, uid) {
-  if (!confirm("Are you sure you want to archive this row?")) return;
-  if (!sheetName || !uid) { alert("Missing sheet or UID"); return; }
+  try{
+    // 1️⃣ get archive sheet name
+    const archiveSheetName = "Archive_" + sheetName;
 
-  const archiveSheetName = getArchiveSheet(sheetName);
-  console.log("Attempting to archive UID:", uid, "from sheet:", sheetName, "to archive:", archiveSheetName);
+    // 2️⃣ ensure archive tab exists
+    await apiFetch({ sheet: sheetName, action: "ensureArchive", ArchiveSheet: archiveSheetName });
 
-  try {
-    const res = await apiFetch(new URLSearchParams({
-      sheet: sheetName,
-      action: "delete",
-      UID: uid
-    }));
+    // 3️⃣ delete original row (server-side will move it to archive)
+    await apiFetch({ sheet: sheetName, action: "delete", UID: uid });
 
     alert("Row archived successfully");
     await loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));
     await loadDashboard();
-  } catch (err) {
-    alert("Failed to archive row: " + err.message);
-    console.error("deleteRowConfirm error:", err);
-  }
+  }catch(err){ alert("Failed to archive row: "+err.message); console.error(err); }
 }
 
 /* -------------------- EDIT -------------------- */
-let currentEdit = { sheet: null, uid: null, row: null };
-
+let currentEdit={ sheet:null, uid:null, row:null };
 async function openEditModal(sheet, uid){
-  debugLog("DEBUG → openEditModal:", sheet, uid);
-  if(!uid){ alert("Cannot edit: UID missing"); return; }
   try{
-    const item = await apiFetch(new URLSearchParams({ sheet, action: "getItem", UID: uid }));
+    const item = await apiFetch({ sheet, action:"getItem", UID:uid });
     if(!item){ alert("Item not found"); return; }
-    currentEdit = { sheet, uid, row: item };
+    currentEdit={ sheet, uid, row:item };
 
-    let html = `<h5>Edit ${escapeHtml(sheet)}</h5>`;
+    let html=`<h5>Edit ${escapeHtml(sheet)}</h5>`;
     for(const k in item){
-      if(k === "UID" || k === "Timestamp") continue;
-      const val = String(item[k] || "");
-      const inputId = makeId(k, "edit-");
-
+      if(k==="UID"||k==="Timestamp") continue;
+      const val=String(item[k]||""); const inputId=makeId(k,"edit-");
       if(k.toLowerCase().includes("details") || k.toLowerCase().includes("message")){
-        html += `<label>${escapeHtml(k)}</label><textarea id="${inputId}" class="form-control mb-2">${escapeHtml(val)}</textarea>`;
+        html+=`<label>${escapeHtml(k)}</label><textarea id="${inputId}" class="form-control mb-2">${escapeHtml(val)}</textarea>`;
       } else if(k.toLowerCase().includes("date")){
-        // input type="date" must receive YYYY-MM-DD
-        let v = "";
-        if(val){
-          const d = new Date(val);
-          if(!isNaN(d)){
-            v = d.toISOString().slice(0,10); // YYYY-MM-DD
-          } else {
-            // fallback: try to keep original if it already looks like YYYY-MM-DD
-            v = val.length >= 10 ? val.slice(0,10) : "";
-          }
-        }
-        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${escapeHtml(v)}">`;
+        let v=""; if(val){ const d=new Date(val); if(!isNaN(d)) v=d.toISOString().slice(0,10); else v=val.slice(0,10); }
+        html+=`<label>${escapeHtml(k)}</label><input id="${inputId}" type="date" class="form-control mb-2" value="${escapeHtml(v)}">`;
       } else {
-        html += `<label>${escapeHtml(k)}</label><input id="${inputId}" class="form-control mb-2" value="${escapeHtml(val)}">`;
+        html+=`<label>${escapeHtml(k)}</label><input id="${inputId}" class="form-control mb-2" value="${escapeHtml(val)}">`;
       }
     }
-
-    html += `<div class="mt-2">
-               <button type="button" class="btn btn-primary" onclick="submitEdit()">Save</button>
-               <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-             </div>`;
+    html+=`<div class="mt-2">
+             <button type="button" class="btn btn-primary" onclick="submitEdit()">Save</button>
+             <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+           </div>`;
     showModal(html);
-  }catch(err){
-    alert("Error loading item: " + err.message);
-    debugLog("openEditModal error", err);
-  }
+  }catch(err){ alert("Error loading item: "+err.message); debugLog("openEditModal error", err); }
 }
 
 async function submitEdit(){
   if(!currentEdit.uid || !currentEdit.sheet){ alert("Cannot save: UID or sheet missing"); return; }
   try{
-    const p = new URLSearchParams({ sheet: currentEdit.sheet, action: "update", UID: currentEdit.uid });
+    const p=new URLSearchParams({ sheet: currentEdit.sheet, action:"update", UID: currentEdit.uid });
     for(const k in currentEdit.row){
-      if(k === "UID" || k === "Timestamp") continue;
-      const el = qs(makeId(k, "edit-"));
-      if(el) p.set(k, el.value);
+      if(k==="UID"||k==="Timestamp") continue;
+      const el=qs(makeId(k,"edit-")); if(el) p.set(k,el.value);
     }
     await apiFetch(p);
     alert("Updated successfully");
     closeModal();
-    await loadTable(currentEdit.sheet, mapSheetToContainer(currentEdit.sheet), getColumnsForSheet(currentEdit.sheet));
+    await loadTable(currentEdit.sheet,mapSheetToContainer(currentEdit.sheet),getColumnsForSheet(currentEdit.sheet));
     await loadDashboard();
-  }catch(err){
-    alert("Update failed: " + err.message);
-    debugLog("submitEdit error", err);
-  }
+  }catch(err){ alert("Update failed: "+err.message); debugLog("submitEdit error", err); }
 }
 
 /* -------------------- MODAL -------------------- */
 function showModal(content){
-  const existing = document.getElementById("customModal");
-  if(existing) existing.remove();
-  const modal = document.createElement("div");
-  modal.id = "customModal";
-  modal.style.position = "fixed";
-  modal.style.top = "0";
-  modal.style.left = "0";
-  modal.style.width = "100%";
-  modal.style.height = "100%";
-  modal.style.backgroundColor = "rgba(0,0,0,0.5)";
-  modal.style.display = "flex";
-  modal.style.justifyContent = "center";
-  modal.style.alignItems = "center";
-  modal.style.zIndex = "9999";
-  const box = document.createElement("div");
-  box.style.backgroundColor = "#fff";
-  box.style.padding = "20px";
-  box.style.borderRadius = "8px";
-  box.style.minWidth = "300px";
-  box.innerHTML = content;
-  modal.appendChild(box);
-  document.body.appendChild(modal);
+  const existing=qs("customModal"); if(existing) existing.remove();
+  const modal=document.createElement("div"); modal.id="customModal";
+  Object.assign(modal.style,{position:"fixed",top:0,left:0,width:"100%",height:"100%",backgroundColor:"rgba(0,0,0,0.5)",display:"flex",justifyContent:"center",alignItems:"center",zIndex:9999});
+  const box=document.createElement("div"); Object.assign(box.style,{backgroundColor:"#fff",padding:"20px",borderRadius:"8px",minWidth:"300px"});
+  box.innerHTML=content; modal.appendChild(box); document.body.appendChild(modal);
 }
-
-function closeModal(){ const modal = qs("customModal"); if(modal) modal.remove(); }
-
-/* -------------------- FORMS & ADD HANDLERS -------------------- */
-function renderForm(type){
-  const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD for input[type=date]
-  switch(type){
-    case "join":
-      return `<div class="row g-2">
-        <div class="col-md-4"><input id="vj-vessel" class="form-control" placeholder="Vessel"></div>
-        <div class="col-md-4"><input id="vj-principal" class="form-control" placeholder="Principal"></div>
-        <div class="col-md-4"><input id="vj-port" class="form-control" placeholder="Port"></div>
-        <div class="col-md-4"><input id="vj-crew" class="form-control" placeholder="No. of Crew"></div>
-        <div class="col-md-4"><input id="vj-rank" class="form-control" placeholder="Rank"></div>
-        <div class="col-md-4"><input id="vj-date" type="date" class="form-control" value="${today}"></div>
-        <div class="col-md-4"><input id="vj-flight" class="form-control" placeholder="Flight"></div>
-        <div class="mt-2">
-          <button class="btn btn-success" onclick="handleAddVesselJoin()">Save</button>
-          <button class="btn btn-secondary" onclick="toggleForm('join')">Cancel</button>
-        </div>
-      </div>`;
-    case "arrivals":
-      return `<div class="row g-2">
-        <div class="col-md-4"><input id="av-vessel" class="form-control" placeholder="Vessel"></div>
-        <div class="col-md-4"><input id="av-principal" class="form-control" placeholder="Principal"></div>
-        <div class="col-md-4"><input id="av-port" class="form-control" placeholder="Port"></div>
-        <div class="col-md-4"><input id="av-crew" class="form-control" placeholder="No. of Crew"></div>
-        <div class="col-md-4"><input id="av-rank" class="form-control" placeholder="Rank"></div>
-        <div class="col-md-4"><input id="av-date" type="date" class="form-control" value="${today}"></div>
-        <div class="col-md-4"><input id="av-flight" class="form-control" placeholder="Flight"></div>
-        <div class="mt-2">
-          <button class="btn btn-success" onclick="handleAddArrivals()">Save</button>
-          <button class="btn btn-secondary" onclick="toggleForm('arrivals')">Cancel</button>
-        </div>
-      </div>`;
-    case "updates":
-      return `<input id="up-title" class="form-control mb-2" placeholder="Title">
-              <textarea id="up-details" class="form-control mb-2" placeholder="Details"></textarea>
-              <input id="up-date" type="date" class="form-control mb-2" value="${today}">
-              <div class="mt-2">
-                <button class="btn btn-success" onclick="handleAddUpdate()">Save</button>
-                <button class="btn btn-secondary" onclick="toggleForm('updates')">Cancel</button>
-              </div>`;
-    case "memo":
-      return `<input id="memo-title" class="form-control mb-2" placeholder="Title">
-              <textarea id="memo-details" class="form-control mb-2" placeholder="Details"></textarea>
-              <input id="memo-date" type="date" class="form-control mb-2" value="${today}">
-              <div class="mt-2">
-                <button class="btn btn-success" onclick="handleAddMemo()">Save</button>
-                <button class="btn btn-secondary" onclick="toggleForm('memo')">Cancel</button>
-              </div>`;
-    case "training":
-      return `<input id="tr-subject" class="form-control mb-2" placeholder="Subject">
-              <textarea id="tr-details" class="form-control mb-2" placeholder="Details"></textarea>
-              <input id="tr-date" type="date" class="form-control mb-2" value="${today}">
-              <div class="mt-2">
-                <button class="btn btn-success" onclick="handleAddTraining()">Save</button>
-                <button class="btn btn-secondary" onclick="toggleForm('training')">Cancel</button>
-              </div>`;
-    case "pni":
-      return `<input id="pn-subject" class="form-control mb-2" placeholder="Subject">
-              <textarea id="pn-details" class="form-control mb-2" placeholder="Details"></textarea>
-              <input id="pn-date" type="date" class="form-control mb-2" value="${today}">
-              <div class="mt-2">
-                <button class="btn btn-success" onclick="handleAddPni()">Save</button>
-                <button class="btn btn-secondary" onclick="toggleForm('pni')">Cancel</button>
-              </div>`;
-    default: return "";
-  }
-}
-
-function toggleForm(id){
-  const map = {
-    join:"join-form", arrivals:"arrival-form", updates:"update-form",
-    memo:"memo-form", training:"training-form", pni:"pni-form"
-  };
-  const containerId = map[id];
-  const c = qs(containerId);
-  if(!c) return;
-  if(c.style.display==="block"){ c.style.display="none"; return; }
-  c.innerHTML = renderForm(id);
-  c.style.display = "block";
-}
+function closeModal(){ const modal=qs("customModal"); if(modal) modal.remove(); }
 
 /* -------------------- ADD HANDLERS -------------------- */
-async function handleAddVesselJoin(){
-  // read date input as YYYY-MM-DD (browser provides this)
-  const raw = qs("vj-date")?.value || "";
-  const dateToSend = raw; // store as YYYY-MM-DD
-  const fields = {
-    Vessel: qs("vj-vessel")?.value||"",
-    Principal: qs("vj-principal")?.value||"",
-    Port: qs("vj-port")?.value||"",
-    "No. of Crew": qs("vj-crew")?.value||"",
-    Rank: qs("vj-rank")?.value||"",
-    Date: dateToSend,
-    Flight: qs("vj-flight")?.value||""
-  };
-  await addRowAndReload("Vessel_Join", fields, "crew-join-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
-}
-
-async function handleAddArrivals(){
-  const raw = qs("av-date")?.value || "";
-  const dateToSend = raw;
-  const fields = {
-    Vessel: qs("av-vessel")?.value||"",
-    Principal: qs("av-principal")?.value||"",
-    Port: qs("av-port")?.value||"",
-    "No. of Crew": qs("av-crew")?.value||"",
-    Rank: qs("av-rank")?.value||"",
-    Date: dateToSend,
-    Flight: qs("av-flight")?.value||""
-  };
-  await addRowAndReload("Arrivals", fields, "crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
-}
-
-async function handleAddUpdate(){
-  const raw = qs("up-date")?.value || "";
-  const dateToSend = raw;
-  await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", Date: dateToSend },"daily-updates-data",["Timestamp","Title","Details","Date"]);
-}
-async function handleAddMemo(){
-  const raw = qs("memo-date")?.value || "";
-  const dateToSend = raw;
-  await addRowAndReload("Memo",{Title:qs("memo-title")?.value||"", Details:qs("memo-details")?.value||"", Date: dateToSend },"memo-data",["Timestamp","Title","Details","Date"]);
-}
-async function handleAddTraining(){
-  const raw = qs("tr-date")?.value || "";
-  const dateToSend = raw;
-  await addRowAndReload("Training",{Subject:qs("tr-subject")?.value||"", Details:qs("tr-details")?.value||"", Date: dateToSend },"training-data",["Timestamp","Subject","Details","Date"]);
-}
-async function handleAddPni(){
-  const raw = qs("pn-date")?.value || "";
-  const dateToSend = raw;
-  await addRowAndReload("Pni",{Subject:qs("pn-subject")?.value||"", Details:qs("pn-details")?.value||"", Date: dateToSend },"pni-data",["Timestamp","Subject","Details","Date"]);
-}
-
-async function addRowAndReload(sheet, fields, containerId, columns){
+async function handleAdd(sheet, fields, containerId, columns){
   try{
-    await apiFetch(new URLSearchParams({ sheet, action:"add", ...fields }));
+    await apiFetch({ sheet, action:"add", ...fields });
     alert("Added successfully");
-    toggleForm(sheet==="Vessel_Join"?"join":sheet==="Arrivals"?"arrivals":sheet.toLowerCase());
+    toggleForm(sheet.toLowerCase());
     await loadTable(sheet, containerId, columns);
     await loadDashboard();
-  }catch(e){ alert("Add failed: "+e.message); debugLog("addRowAndReload error", e); }
+  }catch(e){ alert("Add failed: "+e.message); debugLog("handleAdd error", e); }
 }
 
 /* -------------------- CHAT -------------------- */
 async function loadChat(){
-  const box = qs("chatboard");
-  if(!box) return;
+  const box=qs("chatboard"); if(!box) return;
   box.innerHTML="Loading...";
   try{
-    const data = await apiFetch(new URLSearchParams({sheet:"Chatboard", action:"get"})).catch(()=>[]);
+    const data=await apiFetch({ sheet:"Chatboard", action:"get" }).catch(()=>[]);
     box.innerHTML="";
     data.slice().reverse().forEach(r=>{
-      const d = document.createElement("div");
-      d.className = "message";
-      // show timestamp as friendly date
-      const ts = r.Timestamp || "";
-      const tObj = new Date(ts);
-      const tsDisplay = isNaN(tObj) ? ts : tObj.toLocaleString(); // keep time for chat
-      d.innerHTML = `<small>[${escapeHtml(tsDisplay)}] <b>${escapeHtml(r.Name||"")}</b>: ${escapeHtml(r.Message||"")}</small>`;
+      const d=document.createElement("div"); d.className="message";
+      const ts=r.Timestamp||""; const tObj=new Date(ts);
+      const tsDisplay=isNaN(tObj)?ts:tObj.toLocaleString();
+      d.innerHTML=`<small>[${escapeHtml(tsDisplay)}] <b>${escapeHtml(r.Name||"")}</b>: ${escapeHtml(r.Message||"")}</small>`;
       box.appendChild(d);
     });
     if(!data.length) box.innerHTML="<small>No chat messages</small>";
@@ -566,28 +298,26 @@ async function loadChat(){
 }
 
 async function sendMessage(){
-  const input = qs("chat-input");
-  const msg = input?.value.trim();
-  if(!msg) return;
-
-  const p = {
-    sheet: "Chatboard",
-    action: "chat",
-    Name: sessionStorage.getItem("loggedInUser") || "User",
-    Message: msg
-  };
-
-  try{
-    await apiFetch(p);  // Message is now a plain string
-    input.value = "";
-    await loadChat();
-  }catch(e){
-    alert("Failed to send chat: " + e.message);
-  }
+  const input=qs("chat-input"); const msg=input?.value.trim(); if(!msg) return;
+  const p={ sheet:"Chatboard", action:"chat", Name:sessionStorage.getItem("loggedInUser")||"User", Message:msg };
+  try{ await apiFetch(p); input.value=""; await loadChat(); }catch(e){ alert("Failed to send chat: "+e.message); }
 }
+
+/* -------------------- FORM & TOGGLE -------------------- */
+function toggleForm(type){ const map={ join:"join-form", arrivals:"arrival-form", updates:"update-form", memo:"memo-form", training:"training-form", pni:"pni-form" };
+  const c=qs(map[type]); if(!c) return;
+  if(c.style.display==="block"){ c.style.display="none"; return; }
+  c.innerHTML=renderForm(type); c.style.display="block";
+}
+
+/* -------------------- AUTO REFRESH -------------------- */
+setInterval(async ()=>{
+  if(sessionStorage.getItem("loggedInUser")){
+    await loadDashboard();
+    await loadAllData();
+    await loadChat();
+  }
+}, 15000);
 
 /* -------------------- INIT -------------------- */
-async function initReload(){
-  await loadDashboard();
-  await loadAllData();
-}
+async function initReload(){ await loadDashboard(); await loadAllData(); await loadChat(); }

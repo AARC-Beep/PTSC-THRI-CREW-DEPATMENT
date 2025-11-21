@@ -139,6 +139,17 @@ async function loadDashboard(){
     }
   }
 }
+/* -------------------- DASHBOARD TIMESTAMP -------------------- */
+function updateTimestamp() {
+  const now = new Date();
+  const formatted = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  document.getElementById("last-updated").textContent =
+    `Last updated: ${formatted}`;
+}
 
 /* -------------------- TABLES -------------------- */
 async function loadAllData() {
@@ -233,6 +244,8 @@ async function loadTable(sheetName, containerId, columns) {
       tr.appendChild(tdAction);
 
       tbody.appendChild(tr);
+      row.classList.add("row-highlight");
+setTimeout(() => row.classList.remove("row-highlight"), 1500);
     });
 
     table.appendChild(tbody);

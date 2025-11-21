@@ -139,17 +139,6 @@ async function loadDashboard(){
     }
   }
 }
-/* -------------------- DASHBOARD TIMESTAMP -------------------- */
-function updateTimestamp() {
-  const now = new Date();
-  const formatted = now.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
-  document.getElementById("last-updated").textContent =
-    `Last updated: ${formatted}`;
-}
 
 /* -------------------- TABLES -------------------- */
 async function loadAllData() {
@@ -244,8 +233,6 @@ async function loadTable(sheetName, containerId, columns) {
       tr.appendChild(tdAction);
 
       tbody.appendChild(tr);
-      row.classList.add("row-highlight");
-setTimeout(() => row.classList.remove("row-highlight"), 1500);
     });
 
     table.appendChild(tbody);
@@ -593,28 +580,4 @@ async function sendMessage(){
 async function initReload(){
   await loadDashboard();
   await loadAllData();
-  await loadChat();
-  startAutoRefresh();  // start 15-second auto updates
-}
-
-/* -------------------- AUTO REFRESH (15 seconds) -------------------- */
-let autoReloadTimer = null;
-
-function startAutoRefresh() {
-  if (autoReloadTimer) clearInterval(autoReloadTimer);
-
-  autoReloadTimer = setInterval(async () => {
-    // Don't reload if a modal or form is open (prevents user losing edits)
-    const modalOpen = document.getElementById("customModal");
-    const formOpen = document.querySelector("div[id$='-form'][style*='display: block']");
-
-    if (modalOpen || formOpen) return;
-
-    console.log("Auto-refresh triggered");
-
-    await loadDashboard();
-    await loadAllData();
-    await loadChat();
-
-  }, 15000); // 15 seconds
 }

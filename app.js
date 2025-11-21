@@ -31,18 +31,23 @@ function makeId(name, prefix="edit-"){
 }
 
 async function apiFetch(params){
-  // accept either URLSearchParams or object
-  let urlParams;
-  if(params instanceof URLSearchParams){
-    urlParams = params;
-  } else {
-    urlParams = new URLSearchParams(params);
-  }
+  let urlParams = params instanceof URLSearchParams ? params : new URLSearchParams(params);
   const url = `${GAS_URL}?${urlParams.toString()}`;
   debugLog("API Fetch:", url);
+
   const res = await fetch(url);
   if(!res.ok) throw new Error("Network error: " + res.status);
-  const j = await res.json();
+
+  let rawText = await res.text();
+  debugLog("Raw response:", rawText);
+
+  let j;
+  try {
+    j = JSON.parse(rawText);
+  } catch(e) {
+    throw new Error("Invalid JSON response from server");
+  }
+
   if(j.status && j.status !== "success") throw new Error(j.message || "API error");
   return j.data === undefined ? j : j.data;
 }

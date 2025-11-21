@@ -575,6 +575,29 @@ async function loadChat(){
     debugLog("loadChat error", e); 
   }
 }
+// At top-level, not inside another function
+async function sendMessage() {
+  const input = document.getElementById("chat-input");
+  const msg = input?.value.trim();
+  if (!msg) return;
+
+  try {
+    await apiFetch(new URLSearchParams({
+      sheet: "Chatboard",
+      action: "chat",
+      Name: sessionStorage.getItem("loggedInUser") || "User",
+      Message: msg
+    }));
+    input.value = "";
+    await loadChat();
+    
+    // Auto-scroll
+    const box = document.getElementById("chatboard");
+    if (box) box.scrollTop = box.scrollHeight;
+  } catch (e) {
+    alert("Failed to send chat: " + e.message);
+  }
+}
 
 /* -------------------- INIT -------------------- */
 async function initReload(){

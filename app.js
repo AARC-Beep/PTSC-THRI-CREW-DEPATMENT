@@ -566,18 +566,14 @@ async function loadChat(){
       box.appendChild(d);
     });
     if(!data.length) box.innerHTML="<small>No chat messages</small>";
-  }catch(e){ box.innerHTML="<small>Error loading chat</small>"; debugLog("loadChat error", e); }
-}
 
-async function sendMessage(){
-  const input = qs("chat-input");
-  const msg = input?.value.trim();
-  if(!msg) return;
-  try{
-    await apiFetch(new URLSearchParams({ sheet:"Chatboard", action:"chat", Name:sessionStorage.getItem("loggedInUser")||"User", Message:msg }));
-    input.value="";
-    await loadChat();
-  }catch(e){ alert("Failed to send chat: "+e.message); }
+    // ✅ Auto-scroll to bottom
+    box.scrollTop = box.scrollHeight;
+
+  }catch(e){ 
+    box.innerHTML="<small>Error loading chat</small>"; 
+    debugLog("loadChat error", e); 
+  }
 }
 
 /* -------------------- INIT -------------------- */

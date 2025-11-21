@@ -507,7 +507,7 @@ async function handleAddVesselJoin(){
     Date: dateToSend,
     Flight: qs("vj-flight")?.value||""
   };
-  await addRowAndReload("Vessel_Join", fields, "crew-join-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
+  await addRowAndReload("Vessel_Join", fields, "crew-join-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
 }
 
 async function handleAddArrivals(){
@@ -522,28 +522,28 @@ async function handleAddArrivals(){
     Date: dateToSend,
     Flight: qs("av-flight")?.value||""
   };
-  await addRowAndReload("Arrivals", fields, "crew-arrivals-data", ["Timestamp","Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
+  await addRowAndReload("Arrivals", fields, "crew-arrivals-data", ["Vessel","Principal","Port","No. of Crew","Rank","Date","Flight"]);
 }
 
 async function handleAddUpdate(){
   const raw = qs("up-date")?.value || "";
   const dateToSend = raw;
-  await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", Date: dateToSend },"daily-updates-data",["Timestamp","Title","Details","Date"]);
+  await addRowAndReload("Updates",{Title:qs("up-title")?.value||"", Details:qs("up-details")?.value||"", Date: dateToSend },"daily-updates-data",["Title","Details","Date"]);
 }
 async function handleAddMemo(){
   const raw = qs("memo-date")?.value || "";
   const dateToSend = raw;
-  await addRowAndReload("Memo",{Title:qs("memo-title")?.value||"", Details:qs("memo-details")?.value||"", Date: dateToSend },"memo-data",["Timestamp","Title","Details","Date"]);
+  await addRowAndReload("Memo",{Title:qs("memo-title")?.value||"", Details:qs("memo-details")?.value||"", Date: dateToSend },"memo-data",["Title","Details","Date"]);
 }
 async function handleAddTraining(){
   const raw = qs("tr-date")?.value || "";
   const dateToSend = raw;
-  await addRowAndReload("Training",{Subject:qs("tr-subject")?.value||"", Details:qs("tr-details")?.value||"", Date: dateToSend },"training-data",["Timestamp","Subject","Details","Date"]);
+  await addRowAndReload("Training",{Subject:qs("tr-subject")?.value||"", Details:qs("tr-details")?.value||"", Date: dateToSend },"training-data",["Subject","Details","Date"]);
 }
 async function handleAddPni(){
   const raw = qs("pn-date")?.value || "";
   const dateToSend = raw;
-  await addRowAndReload("Pni",{Subject:qs("pn-subject")?.value||"", Details:qs("pn-details")?.value||"", Date: dateToSend },"pni-data",["Timestamp","Subject","Details","Date"]);
+  await addRowAndReload("Pni",{Subject:qs("pn-subject")?.value||"", Details:qs("pn-details")?.value||"", Date: dateToSend },"pni-data",["Subject","Details","Date"]);
 }
 
 async function addRowAndReload(sheet, fields, containerId, columns){

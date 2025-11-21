@@ -136,6 +136,10 @@ async function loadDashboard(){
     }catch(err){
       container.innerHTML = "<small>Error loading</small>";
       debugLog("Dashboard load error", sheet, err);
+       const now = new Date();
+const ts = now.toLocaleTimeString(); // 12:34:56 PM format
+const lastUpdatedEl = document.getElementById("last-updated");
+if(lastUpdatedEl) lastUpdatedEl.textContent = `Last updated: ${ts}`;
     }
   }
 }

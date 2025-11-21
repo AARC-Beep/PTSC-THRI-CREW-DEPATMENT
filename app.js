@@ -289,14 +289,18 @@ async function deleteRowConfirm(sheetName, uid) {
   if (!sheetName || !uid) { alert("Missing sheet or UID"); return; }
 
   const archiveSheetName = getArchiveSheet(sheetName);
-  console.log("Attempting to archive UID:", uid, "from sheet:", sheetName, "to archive:", archiveSheetName);
+  if (!archiveSheetName) { alert("Archive sheet not defined"); return; }
 
   try {
-    const res = await apiFetch(new URLSearchParams({
-      sheet: sheetName,
-      action: "delete",
-      UID: uid
-    }));
+    // 1️⃣ Get the row data first
+    const rowData = await apiFetch(new URLSearchParams({ sheet: sheetName, action: "getItem", UID: uid }));
+    if (!rowData) { alert("Row not found"); return; }
+
+    // 2️⃣ Add the row to the archive sheet
+    await apiFetch(new URLSearchParams({ sheet: archiveSheetName, action: "add", ...rowData }));
+
+    // 3️⃣ Delete the row from the original sheet
+    await apiFetch(new URLSearchParams({ sheet: sheetName, action: "delete", UID: uid }));
 
     alert("Row archived successfully");
     await loadTable(sheetName, mapSheetToContainer(sheetName), getColumnsForSheet(sheetName));

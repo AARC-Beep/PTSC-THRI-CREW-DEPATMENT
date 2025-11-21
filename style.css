@@ -220,11 +220,6 @@ table td button {
         padding: 15px;
     }
 }
-@keyframes highlightRow {
-  0%   { background-color: #fff6a0; }
-  100% { background-color: white; }
-}
+.highlight { animation: flashHighlight 2s ease; }
+@keyframes flashHighlight { 0% { background-color: #ffff99; } 100% { background-color: transparent; } }
 
-.row-highlight {
-  animation: highlightRow 1.5s ease-out;
-}

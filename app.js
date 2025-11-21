@@ -581,3 +581,19 @@ async function initReload(){
   await loadDashboard();
   await loadAllData();
 }
+
+// AUTO-REFRESH EVERY 15 SECONDS
+async function autoReload(){
+  await initReload();
+  setTimeout(autoReload, 15000); // 15 seconds
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  if(sessionStorage.getItem("loggedInUser")){
+    qs("login-overlay").style.display = "none";
+    autoReload(); // start auto-refresh
+  } else {
+    qs("login-overlay").style.display = "flex";
+  }
+});
+
